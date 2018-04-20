@@ -4,7 +4,7 @@ public class Scripts {
 	
 	public String clickScript() {
 		StringBuilder builder = new StringBuilder();
-		builder.append("\n //custom Insert \n");
+		builder.append("\n /*custom Insert*/ \n");
 		builder.append("\\$j(document).ready(function() {\n");
 		builder.append("var location = window.location;\n");
 		builder.append("var url = location.href;\n");
@@ -30,7 +30,6 @@ public class Scripts {
 		builder.append("type:\"POST\",\n");
 		builder.append("data:{event:event.type, url:url, id:id, time:time},\n");
 		builder.append("success: function(result) {\n");
-		builder.append("alert('ok');\n");
 		builder.append("return true;\n");
 		builder.append("}\n");
 		builder.append("});\n");

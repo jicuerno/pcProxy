@@ -29,5 +29,15 @@
 			<artifactId>slf4j-nop</artifactId>
 			<version>1.7.25</version>
 		</dependency>
+		<dependency>
+			<groupId>org.seleniumhq.selenium</groupId>
+			<artifactId>selenium-firefox-driver</artifactId>
+			<version>3.11.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.google.collections</groupId>
+			<artifactId>google-collections</artifactId>
+			<version>0.9</version>
+		</dependency>
 	</dependencies>
 </project>

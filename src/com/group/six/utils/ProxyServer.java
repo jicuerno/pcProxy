@@ -2,8 +2,19 @@ package com.group.six.utils;
 
 import static java.net.URLDecoder.decode;
 
+import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
+import java.util.logging.Level;
+
+import org.openqa.selenium.Proxy;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.firefox.FirefoxDriverLogLevel;
+import org.openqa.selenium.firefox.FirefoxOptions;
+import org.openqa.selenium.firefox.FirefoxProfile;
+import org.openqa.selenium.remote.CapabilityType;
+import org.openqa.selenium.remote.DesiredCapabilities;
 
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
@@ -11,6 +22,7 @@ import net.lightbody.bmp.BrowserMobProxy;
 import net.lightbody.bmp.BrowserMobProxyServer;
 import net.lightbody.bmp.filters.RequestFilter;
 import net.lightbody.bmp.filters.ResponseFilter;
+import net.lightbody.bmp.mitm.KeyStoreFileCertificateSource;
 import net.lightbody.bmp.proxy.CaptureType;
 import net.lightbody.bmp.util.HttpMessageContents;
 import net.lightbody.bmp.util.HttpMessageInfo;
@@ -22,6 +34,8 @@ public class ProxyServer {
 	public InetAddress direccion;
 
 	public ProxyServer(String port, String ip) throws Exception {
+
+		KeyStoreFileCertificateSource fileCertificateSource = new KeyStoreFileCertificateSource("PKCS12", new File("/path/to/my/keystore.p12"), "keyAlias", "keystorePassword");
 
 		server = new BrowserMobProxyServer();
 
@@ -35,10 +49,9 @@ public class ProxyServer {
 						String messageContents = contents.getTextContents();
 						messageContents = messageContents.replace("event=", "").replace("url=", "").replace("id=", "").replace("time=", "");
 						String[] array = messageContents.split("&");
-						System.out.println("#--> enviado: " + messageContents);
-
 						try {
 							String uri = decode(array[1], "UTF-8");
+							System.out.println("#--> enviado: " + array[0] + "," + uri + "," + array[2] + "," + array[3]);
 							realizarInsercion(array[0], uri, array[2], array[3]);
 						} catch (UnsupportedEncodingException e) {
 							e.printStackTrace();
@@ -73,7 +86,7 @@ public class ProxyServer {
 					}
 				}
 			});
-		
+
 			if (!port.equals(""))
 				puerto = Integer.parseInt(port);
 			else
@@ -82,13 +95,52 @@ public class ProxyServer {
 				direccion = InetAddress.getByName(ip);
 			else
 				direccion = InetAddress.getLocalHost();
-			
+
 			server.start(puerto, direccion);
 			System.out.println("PROXY iniciado:" + direccion.getHostAddress() + ":8080");
 			server.enableHarCaptureTypes(CaptureType.REQUEST_CONTENT, CaptureType.RESPONSE_CONTENT);
+
+			setProfileFirefox(puerto, direccion.getHostAddress());
+
 		} catch (Exception e) {
 			server.stop();
 			throw new Exception();
+		}
+	}
+
+	private void setProfileFirefox(int port, String ip) {
+
+		WebDriver webDriver = null;
+		try {
+			String path = new File("").getAbsolutePath();
+			// Set log level
+
+			String proxyInfo = ip + ":" + port;
+			Proxy proxy = new Proxy();
+			proxy.setProxyType(Proxy.ProxyType.MANUAL);
+			proxy.setHttpProxy(proxyInfo).setFtpProxy(proxyInfo).setSslProxy(proxyInfo);
+
+			FirefoxOptions options = new FirefoxOptions();
+
+			options.setLogLevel(FirefoxDriverLogLevel.DEBUG);
+			options.setAcceptInsecureCerts(true);
+			options.addPreference("acceptSslCerts", true);
+			options.addPreference("enableNativeEvents", true);
+			options.setProxy(proxy);
+			options.setCapability(CapabilityType.PROXY, proxy);
+
+			System.setProperty("webdriver.gecko.driver", path + "\\driver\\geckodriver.exe");
+
+			webDriver = new FirefoxDriver(options);
+
+			webDriver.get("https://www.google.com/");
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			if (webDriver != null) {
+				webDriver.quit();
+			}
 		}
 	}
 
