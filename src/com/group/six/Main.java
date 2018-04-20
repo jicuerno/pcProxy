@@ -1,17 +1,20 @@
 package com.group.six;
 
-import com.group.six.utils.ProxyServer;
+import java.awt.FlowLayout;
 
-import net.lightbody.bmp.BrowserMobProxy;
+import javax.swing.JFrame;
 
 public class Main {
 
-	static BrowserMobProxy server;	
-	
 	public static void main(String[] args) {
-		System.out.println("INICIANDO PROXY");
-		ProxyServer proxy =  new ProxyServer();	
-		server = proxy.server;
-	}
+		final JFrame frame = new ConfigFrame();
 
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.setSize(350, 200);
+		frame.setLayout(new FlowLayout());
+		frame.setVisible(true);
+		frame.setTitle("Configuracion");
+		frame.setLocation(320, 320);
+
+	}
 }
