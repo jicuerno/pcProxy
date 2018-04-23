@@ -1,7 +1,8 @@
 package com.group.six;
 
 import java.awt.BorderLayout;
-import java.awt.Color;import java.awt.Component;
+import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Graphics;
@@ -19,6 +20,8 @@ import javax.swing.JTextField;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 
+import org.openqa.selenium.WebDriver;
+
 import com.group.six.utils.ProxyServer;
 
 import net.lightbody.bmp.BrowserMobProxy;
@@ -34,9 +37,10 @@ public class ConfigFrame extends JFrame {
 	private JButton btnClose;
 
 	private BrowserMobProxy proxy;
+	private WebDriver webDriver;
 
 	public ConfigFrame() {
-		
+
 		GridBagLayout grid = new GridBagLayout();
 		JPanel panel = new JPanel(grid);
 		GridBagConstraints cs = new GridBagConstraints();
@@ -46,7 +50,7 @@ public class ConfigFrame extends JFrame {
 		cs.fill = GridBagConstraints.HORIZONTAL;
 
 		lbMesagge = new JLabel(" ");
-		
+
 		lbPort = new JLabel("Puerto: ");
 		cs.gridx = 0;
 		cs.gridy = 0;
@@ -80,19 +84,24 @@ public class ConfigFrame extends JFrame {
 			public void actionPerformed(ActionEvent e) {
 				try {
 					ProxyServer servidor = new ProxyServer(tfPort.getText(), pfIp.getText());
-					lbMesagge.setText("  Iniciado en :"+ servidor.direccion.getHostAddress() + " : " + servidor.puerto   );
-					proxy= servidor.server;
+					tfPort.setText(servidor.puerto.toString());
+					pfIp.setText(servidor.direccion.getHostAddress());
+					lbMesagge.setText("  Iniciado en :" + servidor.direccion.getHostAddress() + " : " + servidor.puerto);
+					proxy = servidor.server;
+					webDriver = servidor.webDriver;
 				} catch (Exception ex) {
 					lbMesagge.setText("error:" + ex.getMessage());
 				}
 			}
 		});
-		
+
 		btnClose.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				if (proxy != null)
 					proxy.stop();
+				if (webDriver != null)
+					webDriver.quit();
 				dispose();
 			}
 		});
@@ -101,11 +110,11 @@ public class ConfigFrame extends JFrame {
 		bp.setSize(new Dimension(200, 20));
 		bp.add(btnInit);
 		bp.add(btnClose);
-		
+
 		JPanel bp2 = new JPanel();
-		bp2.setSize(new Dimension(200, 20));	
+		bp2.setSize(new Dimension(200, 20));
 		bp2.add(lbMesagge);
-		
+
 		getContentPane().add(panel, BorderLayout.CENTER);
 		getContentPane().add(bp, BorderLayout.CENTER);
 		getContentPane().add(bp2, BorderLayout.CENTER);

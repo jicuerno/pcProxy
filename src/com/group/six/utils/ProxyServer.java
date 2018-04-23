@@ -5,16 +5,13 @@ import static java.net.URLDecoder.decode;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
-import java.util.logging.Level;
 
 import org.openqa.selenium.Proxy;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxDriverLogLevel;
 import org.openqa.selenium.firefox.FirefoxOptions;
-import org.openqa.selenium.firefox.FirefoxProfile;
 import org.openqa.selenium.remote.CapabilityType;
-import org.openqa.selenium.remote.DesiredCapabilities;
 
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
@@ -32,12 +29,17 @@ public class ProxyServer {
 	public BrowserMobProxy server;
 	public Integer puerto;
 	public InetAddress direccion;
+	public WebDriver webDriver;
+	private String script;
 
 	public ProxyServer(String port, String ip) throws Exception {
 
 		KeyStoreFileCertificateSource fileCertificateSource = new KeyStoreFileCertificateSource("PKCS12", new File("/path/to/my/keystore.p12"), "keyAlias", "keystorePassword");
 
 		server = new BrowserMobProxyServer();
+
+		script = new Scripts().clickScript();
+		System.out.println(script);
 
 		try {
 			server.addRequestFilter(new RequestFilter() {
@@ -47,12 +49,15 @@ public class ProxyServer {
 					String url = messageInfo.getOriginalUrl().toLowerCase();
 					if (url.contains("www.myservice.com")) {
 						String messageContents = contents.getTextContents();
-						messageContents = messageContents.replace("event=", "").replace("url=", "").replace("id=", "").replace("time=", "");
+						messageContents = messageContents.replace("key=", "").replace("event=", "").replace("url=", "").replace("id=", "").replace("time=", "");
 						String[] array = messageContents.split("&");
 						try {
-							String uri = decode(array[1], "UTF-8");
-							System.out.println("#--> enviado: " + array[0] + "," + uri + "," + array[2] + "," + array[3]);
-							realizarInsercion(array[0], uri, array[2], array[3]);
+							String uri = decode(array[2], "UTF-8");
+							String key = decode(array[0], "UTF-8");
+							
+							LineaDatos linea = new LineaDatos(key,array[1], uri, array[3], array[4]);
+							System.out.println("#--> a Insertar: " + linea);
+							//realizarInsercion(linea);
 						} catch (UnsupportedEncodingException e) {
 							e.printStackTrace();
 						}
@@ -67,19 +72,11 @@ public class ProxyServer {
 				public void filterResponse(HttpResponse response, HttpMessageContents contents, HttpMessageInfo messageInfo) {
 					String messageContents = contents.getTextContents();
 
-					StringBuilder builder = new StringBuilder();
-					builder.append("<script src=\"https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js\"></script>\n");
-					builder.append("<script type=\"text/javascript\">\n");
-					builder.append("var \\$j = jQuery.noConflict(true);\n");
-					builder.append(new Scripts().clickScript());
-					builder.append("</script>\n");
-					builder.append("</head>\n");
-
 					if (messageContents.contains("</HEAD>") || messageContents.contains("</head>")) {
 						// lo injectamos
-						String newContents = messageContents.replaceAll("</HEAD>", builder.toString());
+						String newContents = messageContents.replaceAll("</HEAD>", script);
 						if (!newContents.contains("//custom Insert"))
-							newContents = messageContents.replaceAll("</head>", builder.toString());
+							newContents = messageContents.replaceAll("</head>", script);
 						// lo metemos otra vez
 						contents.setTextContents(newContents);
 						System.out.println("#--> recuperado: " + newContents);
@@ -110,15 +107,15 @@ public class ProxyServer {
 
 	private void setProfileFirefox(int port, String ip) {
 
-		WebDriver webDriver = null;
+		webDriver = null;
+
 		try {
 			String path = new File("").getAbsolutePath();
-			// Set log level
-
 			String proxyInfo = ip + ":" + port;
 			Proxy proxy = new Proxy();
 			proxy.setProxyType(Proxy.ProxyType.MANUAL);
-			proxy.setHttpProxy(proxyInfo).setFtpProxy(proxyInfo).setSslProxy(proxyInfo);
+			proxy.setHttpProxy(proxyInfo);
+			proxy.setNoProxy(null);
 
 			FirefoxOptions options = new FirefoxOptions();
 
@@ -128,24 +125,21 @@ public class ProxyServer {
 			options.addPreference("enableNativeEvents", true);
 			options.setProxy(proxy);
 			options.setCapability(CapabilityType.PROXY, proxy);
+			options.setCapability("marionette", true);
 
 			System.setProperty("webdriver.gecko.driver", path + "\\driver\\geckodriver.exe");
 
 			webDriver = new FirefoxDriver(options);
+			webDriver.get("http://www.zentut.com/java-swing/simple-login-dialog/");
 
-			webDriver.get("https://www.google.com/");
-			
 		} catch (Exception e) {
 			e.printStackTrace();
-		} finally {
-			if (webDriver != null) {
-				webDriver.quit();
-			}
+			webDriver.quit();
 		}
 	}
 
-	private void realizarInsercion(final String element, final String url, final String event, final String time) {
-
+	private void realizarInsercion(LineaDatos linea) {
+		MySQLAccess db = MySQLAccess.getSingletonInstance();
+		db.insert(linea);
 	}
-
 }
