@@ -23,12 +23,12 @@ function submitData(event,url) {
 	if(event){
 		var id = 0; 
 		var time = $j.now(); 
-		var key = deviceId + '|' + pcIp;
+		var key = deviceId;
 		if(event.target){id = event.target.id;}
 		$j.ajax({
 			url:"http://www.myService.com",
 			type:"POST",
-			data:{key: key, event:event.type, url:url, id:id, time:time},
+			data:{key: key, event:event.type, url:url, id:id, time:time, pcIp:pcIp},
 			success: function(result) { return true; }
 		});
 	}

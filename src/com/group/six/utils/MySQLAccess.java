@@ -21,12 +21,13 @@ public class MySQLAccess {
 		try {
 			Class.forName("com.mysql.jdbc.Driver");
 			connect = DriverManager.getConnection("jdbc:mysql:dbProxyMob?" + "user=root&password=");
-			preparedStatement = connect.prepareStatement("INSERT INTO datosRequest ('key','elemento', 'url', 'evento', 'tiempo') VALUES (?,?,?,?,?)");
+			preparedStatement = connect.prepareStatement("INSERT INTO datosRequest ('key','elemento', 'url', 'evento', 'tiempo', pcIp) VALUES (?,?,?,?,?,?)");
 			preparedStatement.setString(1, linea.getKey());
 			preparedStatement.setString(2, linea.getElement());
 			preparedStatement.setString(3, linea.getUrl());
-			preparedStatement.setString(5, linea.getEvent());
-			preparedStatement.setDate(6, linea.getTime());
+			preparedStatement.setString(4, linea.getEvent());
+			preparedStatement.setDate(5, linea.getTime());
+			preparedStatement.setString(6, linea.getPcIp());
 			preparedStatement.executeUpdate();
 		} catch (SQLException e) {
 			e.printStackTrace();

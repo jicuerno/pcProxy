@@ -49,15 +49,16 @@ public class ProxyServer {
 					String url = messageInfo.getOriginalUrl().toLowerCase();
 					if (url.contains("www.myservice.com")) {
 						String messageContents = contents.getTextContents();
-						messageContents = messageContents.replace("key=", "").replace("event=", "").replace("url=", "").replace("id=", "").replace("time=", "");
+						messageContents = messageContents.replace("key=", "").replace("event=", "").replace("url=", "").replace("id=", "").replace("pcIp=", "").replace("time=",
+								"");
 						String[] array = messageContents.split("&");
 						try {
 							String uri = decode(array[2], "UTF-8");
 							String key = decode(array[0], "UTF-8");
-							
-							LineaDatos linea = new LineaDatos(key,array[1], uri, array[3], array[4]);
+							String pcIp = decode(array[5], "UTF-8");
+							LineaDatos linea = new LineaDatos(key, array[1], uri, array[3], array[4], pcIp);
 							System.out.println("#--> a Insertar: " + linea);
-							//realizarInsercion(linea);
+							// realizarInsercion(linea);
 						} catch (UnsupportedEncodingException e) {
 							e.printStackTrace();
 						}
