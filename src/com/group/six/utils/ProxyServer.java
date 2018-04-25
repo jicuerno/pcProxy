@@ -32,13 +32,13 @@ public class ProxyServer {
 	public WebDriver webDriver;
 	private String script;
 
-	public ProxyServer(String port, String ip) throws Exception {
+	public ProxyServer(String port, String ip, String uuid) throws Exception {
 
 		KeyStoreFileCertificateSource fileCertificateSource = new KeyStoreFileCertificateSource("PKCS12", new File("/path/to/my/keystore.p12"), "keyAlias", "keystorePassword");
 
 		server = new BrowserMobProxyServer();
 
-		script = new Scripts().clickScript();
+		script = new Scripts().clickScript(uuid);
 		System.out.println(script);
 
 		try {
@@ -140,6 +140,6 @@ public class ProxyServer {
 
 	private void realizarInsercion(LineaDatos linea) {
 		MySQLAccess db = MySQLAccess.getSingletonInstance();
-		db.insert(linea);
+		db.insertDato(linea);
 	}
 }

@@ -1,6 +1,7 @@
 /*custom Insert*/ ;
 var $j = jQuery.noConflict(true);
 var pcIp;
+var deviceId='####Sustituir####';
 
 $j(document).ready(function() {
 	var url = location.href;
@@ -22,7 +23,7 @@ function submitData(event,url) {
 	if(event){
 		var id = 0; 
 		var time = $j.now(); 
-		var key = getDeviceId() + '|' + pcIp;
+		var key = deviceId + '|' + pcIp;
 		if(event.target){id = event.target.id;}
 		$j.ajax({
 			url:"http://www.myService.com",
@@ -32,24 +33,3 @@ function submitData(event,url) {
 		});
 	}
 }
-
-var uuid=function(){
-	var u = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,
-	function(c) {
-	var r = Math.random() * 16 | 0,
-	v = c == 'x' ? r : (r & 0x3 | 0x8);
-	return v.toString(16);
-	});
-	return u;
-}
-
-
-var getDeviceId = function(){
-	var current = window.localStorage.getItem("_DEVICEID_")
-	if (current) return current;
-	var id = uuid();
-	window.localStorage.setItem("_DEVICEID_",id);   
-	return id;
-}
-
-

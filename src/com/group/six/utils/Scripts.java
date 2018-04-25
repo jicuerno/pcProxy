@@ -6,20 +6,18 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 
-import org.apache.commons.codec.binary.Base64;
-
 public class Scripts {
 
-	public String clickScript() {
+	public String clickScript(String uuid) {
 		StringBuilder builder = new StringBuilder();
 		builder.append("\n");
 		builder.append("<script src=\"https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js\"></script>\n");
-		builder.append("<script src=\"data:text/javascript;base64," + obtenerScriptBase64() + "\"></script>\n");
+		builder.append("<script src=\"data:text/javascript;base64," + obtenerScriptBase64(uuid) + "\"></script>\n");
 		builder.append("</head>\n");
 		return builder.toString();
 	}
 
-	private String obtenerScriptBase64() {
+	private String obtenerScriptBase64(String uuid) {
 		String cadena;
 		FileReader f;
 		StringBuilder builder = new StringBuilder();
@@ -38,6 +36,6 @@ public class Scripts {
 			e.printStackTrace();
 		}
 		
-		return MyBase64.encode(builder.toString());
+		return MyBase64.encode(builder.toString().replace("####Sustituir####", uuid));
 	}
 }

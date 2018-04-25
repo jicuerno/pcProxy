@@ -1,94 +1,127 @@
 package com.group.six;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Graphics;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.security.SecureRandom;
+import java.util.Enumeration;
+import java.util.UUID;
 
+import javax.swing.AbstractButton;
+import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JTextField;
-import javax.swing.border.Border;
-import javax.swing.border.LineBorder;
 
 import org.openqa.selenium.WebDriver;
 
+import com.fasterxml.jackson.annotation.ObjectIdGenerators.UUIDGenerator;
+import com.group.six.utils.LineaDatos;
+import com.group.six.utils.LineaUser;
+import com.group.six.utils.MySQLAccess;
 import com.group.six.utils.ProxyServer;
 
 import net.lightbody.bmp.BrowserMobProxy;
 
 public class ConfigFrame extends JFrame {
 
+	private static volatile SecureRandom numberGenerator = null;
+	private static final long MSB = 0x8000000000000000L;
+	private static final long serialVersionUID = -7147860617586130063L;
 	private JTextField tfPort;
-	private JTextField pfIp;
-	private JLabel lbPort;
-	private JLabel lbIp;
+	private JTextField tfIp;
+	private JTextField tfEdad;
 	private JLabel lbMesagge;
 	private JButton btnInit;
 	private JButton btnClose;
+	private final ButtonGroup buttonGroup = new ButtonGroup();
 
 	private BrowserMobProxy proxy;
 	private WebDriver webDriver;
 
-	public ConfigFrame() {
+	private String uuid;
 
-		GridBagLayout grid = new GridBagLayout();
-		JPanel panel = new JPanel(grid);
-		GridBagConstraints cs = new GridBagConstraints();
-		GridBagConstraints cs2 = new GridBagConstraints();
-		GridBagConstraints cs3 = new GridBagConstraints();
-		GridBagConstraints cs4 = new GridBagConstraints();
-		cs.fill = GridBagConstraints.HORIZONTAL;
+	public ConfigFrame() {
+		this.setTitle("Formulario Inicial");
+		this.setResizable(false);
+		this.setBounds(100, 100, 450, 300);
+		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		this.getContentPane().setLayout(null);
 
 		lbMesagge = new JLabel(" ");
+		lbMesagge.setBounds(20, 20, 200, 16);
+		this.getContentPane().add(lbMesagge);
 
-		lbPort = new JLabel("Puerto: ");
-		cs.gridx = 0;
-		cs.gridy = 0;
-		cs.gridwidth = 1;
-		panel.add(lbPort, cs);
+		JLabel lblEdad = new JLabel("Edad:");
+		lblEdad.setBounds(45, 50, 61, 16);
+		this.getContentPane().add(lblEdad);
 
-		tfPort = new JTextField(5);
-		cs2.gridx = 1;
-		cs2.gridy = 0;
-		cs2.gridwidth = 2;
-		panel.add(tfPort, cs2);
+		JLabel lblSexo = new JLabel("Sexo:");
+		lblSexo.setBounds(245, 50, 61, 16);
+		this.getContentPane().add(lblSexo);
 
-		lbIp = new JLabel("Servidor Ip: ");
-		cs3.gridx = 0;
-		cs3.gridy = 1;
-		cs3.gridwidth = 1;
-		panel.add(lbIp, cs3);
+		JLabel lblPuerto = new JLabel("Puerto:");
+		lblPuerto.setBounds(45, 90, 61, 16);
+		this.getContentPane().add(lblPuerto);
 
-		pfIp = new JTextField(15);
-		cs4.gridx = 1;
-		cs4.gridy = 1;
-		cs4.gridwidth = 2;
-		panel.add(pfIp, cs4);
-		panel.setBorder(new LineBorder(Color.GRAY));
+		JLabel lblIp = new JLabel("Servidor Ip:");
+		lblIp.setBounds(45, 140, 91, 16);
+		this.getContentPane().add(lblIp);
+
+		tfEdad = new JTextField();
+		tfEdad.setBounds(128, 48, 78, 26);
+		this.getContentPane().add(tfEdad);
+		tfEdad.setColumns(10);
+
+		tfPort = new JTextField();
+		tfPort.setBounds(128, 88, 78, 26);
+		this.getContentPane().add(tfPort);
+		tfPort.setColumns(5);
+
+		tfIp = new JTextField();
+		tfIp.setBounds(128, 138, 178, 26);
+		this.getContentPane().add(tfIp);
+		tfIp.setColumns(15);
+
+		JRadioButton rdbtnMasculino = new JRadioButton("Masculino");
+		rdbtnMasculino.setSelected(true);
+		buttonGroup.add(rdbtnMasculino);
+		rdbtnMasculino.setBounds(300, 50, 141, 23);
+		this.getContentPane().add(rdbtnMasculino);
+
+		JRadioButton rdbtnFemenino = new JRadioButton("Femenino");
+		buttonGroup.add(rdbtnFemenino);
+		rdbtnFemenino.setBounds(300, 80, 141, 23);
+		this.getContentPane().add(rdbtnFemenino);
 
 		btnInit = new JButton("Iniciar");
+		btnInit.setBounds(90, 205, 117, 29);
+		this.getContentPane().add(btnInit);
+
 		btnClose = new JButton("Cerrar");
+		btnClose.setBounds(240, 205, 117, 29);
+		this.getContentPane().add(btnClose);
 
 		btnInit.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				try {
-					ProxyServer servidor = new ProxyServer(tfPort.getText(), pfIp.getText());
-					tfPort.setText(servidor.puerto.toString());
-					pfIp.setText(servidor.direccion.getHostAddress());
-					lbMesagge.setText("  Iniciado en :" + servidor.direccion.getHostAddress() + " : " + servidor.puerto);
-					proxy = servidor.server;
-					webDriver = servidor.webDriver;
+
+					if (tfEdad.getText().equals("")) {
+						lbMesagge.setText("error: introduce una Edad valida");
+					} else {
+
+						String uuid = generaUuid();
+						LineaUser user = new LineaUser(uuid, tfEdad.getText(), getSelectedButtonText(buttonGroup));
+						ProxyServer servidor = new ProxyServer(tfPort.getText(), tfIp.getText(), uuid);
+						tfPort.setText(servidor.puerto.toString());
+						tfIp.setText(servidor.direccion.getHostAddress());
+						lbMesagge.setText("  Iniciado en :" + servidor.direccion.getHostAddress() + " : " + servidor.puerto);
+						proxy = servidor.server;
+						webDriver = servidor.webDriver;
+						// realizarInsercion(user);
+					}
 				} catch (Exception ex) {
 					lbMesagge.setText("error:" + ex.getMessage());
 				}
@@ -105,20 +138,29 @@ public class ConfigFrame extends JFrame {
 				dispose();
 			}
 		});
+	}
 
-		JPanel bp = new JPanel();
-		bp.setSize(new Dimension(200, 20));
-		bp.add(btnInit);
-		bp.add(btnClose);
+	private void realizarInsercion(LineaUser linea) {
+		MySQLAccess db = MySQLAccess.getSingletonInstance();
+		db.insertUser(linea);
+	}
 
-		JPanel bp2 = new JPanel();
-		bp2.setSize(new Dimension(200, 20));
-		bp2.add(lbMesagge);
+	private String generaUuid() {
+		SecureRandom ng = numberGenerator;
+		if (ng == null)
+			numberGenerator = ng = new SecureRandom();
+		return Long.toHexString(MSB | ng.nextLong()) + Long.toHexString(MSB | ng.nextLong());
+	}
 
-		getContentPane().add(panel, BorderLayout.CENTER);
-		getContentPane().add(bp, BorderLayout.CENTER);
-		getContentPane().add(bp2, BorderLayout.CENTER);
+	private String getSelectedButtonText(ButtonGroup buttonGroup) {
+		for (Enumeration<AbstractButton> buttons = buttonGroup.getElements(); buttons.hasMoreElements();) {
+			AbstractButton button = buttons.nextElement();
 
-		pack();
+			if (button.isSelected()) {
+				return button.getText();
+			}
+		}
+
+		return null;
 	}
 }
