@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 
+import org.apache.commons.lang3.SystemUtils;
 import org.openqa.selenium.Proxy;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.firefox.FirefoxDriver;
@@ -32,7 +33,7 @@ public class ProxyServer {
 	public WebDriver webDriver;
 	private String script;
 
-	public ProxyServer(String port, String ip, String uuid) throws Exception {
+	public ProxyServer(String port, String ip, String uuid, Tarea tarea) throws Exception {
 
 		KeyStoreFileCertificateSource fileCertificateSource = new KeyStoreFileCertificateSource("PKCS12", new File("/path/to/my/keystore.p12"), "keyAlias", "keystorePassword");
 
@@ -98,7 +99,7 @@ public class ProxyServer {
 			System.out.println("PROXY iniciado:" + direccion.getHostAddress() + ":8080");
 			server.enableHarCaptureTypes(CaptureType.REQUEST_CONTENT, CaptureType.RESPONSE_CONTENT);
 
-			setProfileFirefox(puerto, direccion.getHostAddress());
+			setProfileFirefox(puerto, direccion.getHostAddress(), tarea);
 
 		} catch (Exception e) {
 			server.stop();
@@ -106,7 +107,7 @@ public class ProxyServer {
 		}
 	}
 
-	private void setProfileFirefox(int port, String ip) {
+	private void setProfileFirefox(int port, String ip, Tarea tarea) {
 
 		webDriver = null;
 
@@ -127,11 +128,12 @@ public class ProxyServer {
 			options.setProxy(proxy);
 			options.setCapability(CapabilityType.PROXY, proxy);
 			options.setCapability("marionette", true);
-
-			System.setProperty("webdriver.gecko.driver", path + "\\driver\\geckodriver.exe");
-
+			path += "\\driver\\geckodriver";
+			if (SystemUtils.IS_OS_WINDOWS)
+				path += ".exe";
+			System.setProperty("webdriver.gecko.driver", path);
 			webDriver = new FirefoxDriver(options);
-			webDriver.get("http://www.zentut.com/java-swing/simple-login-dialog/");
+			webDriver.get(tarea.getUrlInicio());
 
 		} catch (Exception e) {
 			e.printStackTrace();

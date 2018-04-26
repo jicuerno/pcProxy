@@ -17,17 +17,19 @@ import javax.swing.JTextField;
 import org.openqa.selenium.WebDriver;
 
 import com.fasterxml.jackson.annotation.ObjectIdGenerators.UUIDGenerator;
+import com.group.six.utils.DatosXml;
 import com.group.six.utils.LineaDatos;
 import com.group.six.utils.LineaUser;
 import com.group.six.utils.MySQLAccess;
 import com.group.six.utils.ProxyServer;
+import com.group.six.utils.ReadXMLFile;
+import com.group.six.utils.Tarea;
 
 import net.lightbody.bmp.BrowserMobProxy;
 
 public class ConfigFrame extends JFrame {
 
-	private static volatile SecureRandom numberGenerator = null;
-	private static final long MSB = 0x8000000000000000L;
+
 	private static final long serialVersionUID = -7147860617586130063L;
 	private JTextField tfPort;
 	private JTextField tfIp;
@@ -40,7 +42,7 @@ public class ConfigFrame extends JFrame {
 	private BrowserMobProxy proxy;
 	private WebDriver webDriver;
 
-	private String uuid;
+
 
 	public ConfigFrame() {
 		this.setTitle("Formulario Inicial");
@@ -110,22 +112,13 @@ public class ConfigFrame extends JFrame {
 
 					if (tfEdad.getText().equals("")) {
 						lbMesagge.setText("error: introduce una Edad valida");
-					} else {
-
-						String uuid = generaUuid();
-						LineaUser user = new LineaUser(uuid, tfEdad.getText(), getSelectedButtonText(buttonGroup));
-						ProxyServer servidor = new ProxyServer(tfPort.getText(), tfIp.getText(), uuid);
-						tfPort.setText(servidor.puerto.toString());
-						tfIp.setText(servidor.direccion.getHostAddress());
-						lbMesagge.setText("  Iniciado en :" + servidor.direccion.getHostAddress() + " : " + servidor.puerto);
-						proxy = servidor.server;
-						webDriver = servidor.webDriver;
-						// realizarInsercion(user);
-					}
+					} else
+						initProxys();
 				} catch (Exception ex) {
 					lbMesagge.setText("error:" + ex.getMessage());
 				}
 			}
+
 		});
 
 		btnClose.addActionListener(new ActionListener() {
@@ -140,16 +133,25 @@ public class ConfigFrame extends JFrame {
 		});
 	}
 
+	private void initProxys() throws Exception {
+		DatosXml datosXml = new ReadXMLFile().getDatosXml();
+		LineaUser user = new LineaUser(datosXml.getIdUsuario(), tfEdad.getText(), getSelectedButtonText(buttonGroup));
+		// realizarInsercion(user);
+
+		for (Tarea tarea : datosXml.getDatos()) {
+			ProxyServer servidor = new ProxyServer(tfPort.getText(), tfIp.getText(), datosXml.getIdUsuario(),tarea);
+			tfPort.setText(servidor.puerto.toString());
+			tfIp.setText(servidor.direccion.getHostAddress());
+			lbMesagge.setText("  Iniciado en :" + servidor.direccion.getHostAddress() + " : " + servidor.puerto);
+			proxy = servidor.server;
+			webDriver = servidor.webDriver;
+
+		}
+	}
+
 	private void realizarInsercion(LineaUser linea) {
 		MySQLAccess db = MySQLAccess.getSingletonInstance();
 		db.insertUser(linea);
-	}
-
-	private String generaUuid() {
-		SecureRandom ng = numberGenerator;
-		if (ng == null)
-			numberGenerator = ng = new SecureRandom();
-		return Long.toHexString(MSB | ng.nextLong()) + Long.toHexString(MSB | ng.nextLong());
 	}
 
 	private String getSelectedButtonText(ButtonGroup buttonGroup) {
