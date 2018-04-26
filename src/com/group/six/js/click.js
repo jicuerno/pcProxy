@@ -14,6 +14,7 @@ $j(document).ready(function() {
 	if (bodyEle.addEventListener) {
 		bodyEle.addEventListener("click",function(){},true);
 	}
+	
 }).click(function(){
 	submitData(arguments[0], window.location.href);
 	return true;

@@ -122,7 +122,7 @@ public class ProxyServer {
 			Proxy proxy = new Proxy();
 			proxy.setProxyType(Proxy.ProxyType.MANUAL);
 			proxy.setHttpProxy(proxyInfo);
-			proxy.setSslProxy(proxyInfo);
+		//	proxy.setSslProxy(proxyInfo);
 			proxy.setNoProxy(null);
 
 			FirefoxOptions options = new FirefoxOptions();
@@ -134,7 +134,7 @@ public class ProxyServer {
 			options.setProxy(proxy);
 			options.setCapability(CapabilityType.PROXY, proxy);
 			options.setCapability("marionette", true);
-			path += "\\driver\\geckodriver";
+			path += "/driver/geckodriver";
 			if (SystemUtils.IS_OS_WINDOWS)
 				path += ".exe";
 			System.setProperty("webdriver.gecko.driver", path);

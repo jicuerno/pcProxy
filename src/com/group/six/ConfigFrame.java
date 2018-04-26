@@ -4,6 +4,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.security.SecureRandom;
 import java.util.Enumeration;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.UUID;
 
 import javax.swing.AbstractButton;
@@ -13,6 +15,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 
 import org.openqa.selenium.WebDriver;
 
@@ -25,10 +28,10 @@ import com.group.six.proxy.ProxyServer;
 import com.group.six.utils.MySQLAccess;
 import com.group.six.utils.ReadXMLFile;
 
+import javafx.application.Platform;
 import net.lightbody.bmp.BrowserMobProxy;
 
 public class ConfigFrame extends JFrame {
-
 
 	private static final long serialVersionUID = -7147860617586130063L;
 	private JTextField tfPort;
@@ -41,8 +44,6 @@ public class ConfigFrame extends JFrame {
 
 	private BrowserMobProxy proxy;
 	private WebDriver webDriver;
-
-
 
 	public ConfigFrame() {
 		this.setTitle("Formulario Inicial");
@@ -108,45 +109,54 @@ public class ConfigFrame extends JFrame {
 		btnInit.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				try {
+				if (tfEdad.getText().equals("")) {
+					lbMesagge.setText("error: introduce una Edad valida");
+				} else {
 
-					if (tfEdad.getText().equals("")) {
-						lbMesagge.setText("error: introduce una Edad valida");
-					} else
-						initProxys();
-				} catch (Exception ex) {
-					lbMesagge.setText("error:" + ex.getMessage());
+					DatosXml datosXml = new ReadXMLFile().getDatosXml();
+					LineaUser user = new LineaUser(datosXml.getIdUsuario(), tfEdad.getText(),
+							getSelectedButtonText(buttonGroup));
+					// realizarInsercion(user);
+
+					for (Tarea tarea : datosXml.getDatos()) {
+						try {
+							Integer tiempo = Integer.parseInt(tarea.getTiempo()) * 100000;
+							initProxys(tarea, datosXml.getIdUsuario());
+							Thread.sleep(tiempo);
+							if (webDriver != null)
+								webDriver.quit();
+							if (proxy != null)
+								proxy.stop();
+						} catch (Exception ex) {
+							lbMesagge.setText("error:" + ex.getMessage());
+						}
+
+					}
 				}
 			}
-
 		});
 
 		btnClose.addActionListener(new ActionListener() {
+
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				if (proxy != null)
-					proxy.stop();
 				if (webDriver != null)
 					webDriver.quit();
+				if (proxy != null)
+					proxy.stop();
 				dispose();
 			}
+
 		});
 	}
 
-	private void initProxys() throws Exception {
-		DatosXml datosXml = new ReadXMLFile().getDatosXml();
-		LineaUser user = new LineaUser(datosXml.getIdUsuario(), tfEdad.getText(), getSelectedButtonText(buttonGroup));
-		// realizarInsercion(user);
-
-		for (Tarea tarea : datosXml.getDatos()) {
-			ProxyServer servidor = new ProxyServer(tfPort.getText(), tfIp.getText(), datosXml.getIdUsuario(),tarea);
-			tfPort.setText(servidor.puerto.toString());
-			tfIp.setText(servidor.direccion.getHostAddress());
-			lbMesagge.setText("  Iniciado en :" + servidor.direccion.getHostAddress() + " : " + servidor.puerto);
-			proxy = servidor.server;
-			webDriver = servidor.webDriver;
-
-		}
+	private void initProxys(Tarea tarea, String idUsuario) throws Exception {
+		ProxyServer servidor = new ProxyServer(tfPort.getText(), tfIp.getText(), idUsuario, tarea);
+		tfPort.setText(servidor.puerto.toString());
+		tfIp.setText(servidor.direccion.getHostAddress());
+		lbMesagge.setText("  Iniciado en :" + servidor.direccion.getHostAddress() + " : " + servidor.puerto);
+		proxy = servidor.server;
+		webDriver = servidor.webDriver;
 	}
 
 	private void realizarInsercion(LineaUser linea) {
