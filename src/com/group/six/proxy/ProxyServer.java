@@ -40,10 +40,10 @@ public class ProxyServer {
 
 	public ProxyServer(String port, String ip, String uuid, Tarea tarea) throws Exception {
 
-		KeyStoreFileCertificateSource fileCertificateSource = new KeyStoreFileCertificateSource("PKCS12", new File("/path/to/my/keystore.p12"), "keyAlias", "keystorePassword");
-
+	
 		server = new BrowserMobProxyServer();
-
+	//	server.setTrustAllServers(true);
+		
 		script = new Scripts().clickScript(uuid);
 		System.out.println(script);
 
@@ -94,7 +94,7 @@ public class ProxyServer {
 			if (!port.equals(""))
 				puerto = Integer.parseInt(port);
 			else
-				puerto = 8080;
+				puerto = 9090;
 			if (!ip.equals(""))
 				direccion = InetAddress.getByName(ip);
 			else
@@ -122,10 +122,11 @@ public class ProxyServer {
 			Proxy proxy = new Proxy();
 			proxy.setProxyType(Proxy.ProxyType.MANUAL);
 			proxy.setHttpProxy(proxyInfo);
+			proxy.setSslProxy(proxyInfo);
 			proxy.setNoProxy(null);
 
 			FirefoxOptions options = new FirefoxOptions();
-
+		    options.addArguments("--ignore-certificate-errors");
 			options.setLogLevel(FirefoxDriverLogLevel.DEBUG);
 			options.setAcceptInsecureCerts(true);
 			options.addPreference("acceptSslCerts", true);

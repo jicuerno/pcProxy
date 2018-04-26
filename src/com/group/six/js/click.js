@@ -1,5 +1,5 @@
 /*custom Insert*/ ;
-var $j = jQuery.noConflict(true);
+
 var pcIp;
 var deviceId='####Sustituir####';
 
