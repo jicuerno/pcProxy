@@ -1,4 +1,4 @@
-package com.group.six.utils;
+package com.group.six.data;
 
 public class Tarea {
 	private String idTarea;

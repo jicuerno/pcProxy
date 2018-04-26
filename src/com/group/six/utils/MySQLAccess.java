@@ -5,6 +5,9 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
+import com.group.six.data.LineaDatos;
+import com.group.six.data.LineaUser;
+
 public class MySQLAccess {
 	private Connection connect = null;
 	private PreparedStatement preparedStatement = null;

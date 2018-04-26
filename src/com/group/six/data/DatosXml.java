@@ -1,4 +1,4 @@
-package com.group.six.utils;
+package com.group.six.data;
 
 import java.security.SecureRandom;
 import java.util.ArrayList;

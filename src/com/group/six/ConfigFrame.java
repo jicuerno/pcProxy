@@ -17,13 +17,13 @@ import javax.swing.JTextField;
 import org.openqa.selenium.WebDriver;
 
 import com.fasterxml.jackson.annotation.ObjectIdGenerators.UUIDGenerator;
-import com.group.six.utils.DatosXml;
-import com.group.six.utils.LineaDatos;
-import com.group.six.utils.LineaUser;
+import com.group.six.data.DatosXml;
+import com.group.six.data.LineaDatos;
+import com.group.six.data.LineaUser;
+import com.group.six.data.Tarea;
+import com.group.six.proxy.ProxyServer;
 import com.group.six.utils.MySQLAccess;
-import com.group.six.utils.ProxyServer;
 import com.group.six.utils.ReadXMLFile;
-import com.group.six.utils.Tarea;
 
 import net.lightbody.bmp.BrowserMobProxy;
 

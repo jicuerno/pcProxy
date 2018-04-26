@@ -1,4 +1,4 @@
-package com.group.six.utils;
+package com.group.six.proxy;
 
 import static java.net.URLDecoder.decode;
 
@@ -13,6 +13,11 @@ import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxDriverLogLevel;
 import org.openqa.selenium.firefox.FirefoxOptions;
 import org.openqa.selenium.remote.CapabilityType;
+
+import com.group.six.data.LineaDatos;
+import com.group.six.data.Tarea;
+import com.group.six.utils.MySQLAccess;
+import com.group.six.utils.Scripts;
 
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
