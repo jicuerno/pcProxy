@@ -14,9 +14,9 @@ import org.openqa.selenium.firefox.FirefoxDriverLogLevel;
 import org.openqa.selenium.firefox.FirefoxOptions;
 import org.openqa.selenium.remote.CapabilityType;
 
-import com.group.six.data.LineaDatos;
+import com.group.six.data.Linea;
 import com.group.six.data.Tarea;
-import com.group.six.utils.MySQLAccess;
+import com.group.six.utils.SQLiteAccess;
 import com.group.six.utils.Scripts;
 
 import io.netty.handler.codec.http.HttpRequest;
@@ -25,7 +25,6 @@ import net.lightbody.bmp.BrowserMobProxy;
 import net.lightbody.bmp.BrowserMobProxyServer;
 import net.lightbody.bmp.filters.RequestFilter;
 import net.lightbody.bmp.filters.ResponseFilter;
-import net.lightbody.bmp.mitm.KeyStoreFileCertificateSource;
 import net.lightbody.bmp.proxy.CaptureType;
 import net.lightbody.bmp.util.HttpMessageContents;
 import net.lightbody.bmp.util.HttpMessageInfo;
@@ -38,33 +37,42 @@ public class ProxyServer {
 	public WebDriver webDriver;
 	private String script;
 
-	public ProxyServer(String port, String ip, String uuid, Tarea tarea) throws Exception {
+	public ProxyServer(String port, String ip, String user, Tarea tarea) throws Exception {
 
-	
 		server = new BrowserMobProxyServer();
-	//	server.setTrustAllServers(true);
-		
-		script = new Scripts().clickScript(uuid);
+		// server.setTrustAllServers(true);
+
+		script = new Scripts().clickScript(user, tarea.getKeyTarea());
 		System.out.println(script);
 
 		try {
 			server.addRequestFilter(new RequestFilter() {
 
 				@Override
-				public HttpResponse filterRequest(HttpRequest request, HttpMessageContents contents, HttpMessageInfo messageInfo) {
+				public HttpResponse filterRequest(HttpRequest request, HttpMessageContents contents,
+						HttpMessageInfo messageInfo) {
 					String url = messageInfo.getOriginalUrl().toLowerCase();
 					if (url.contains("www.myservice.com")) {
 						String messageContents = contents.getTextContents();
-						messageContents = messageContents.replace("key=", "").replace("event=", "").replace("url=", "").replace("id=", "").replace("pcIp=", "").replace("time=",
-								"");
+						
+						messageContents = messageContents.replace("keyUser=", "").replace("keyTarea=", "")
+								.replace("elem=", "").replace("url=", "").replace("event=", "").replace("time=", "")
+								.replace("pcIp=", "");
+						
 						String[] array = messageContents.split("&");
 						try {
-							String uri = decode(array[2], "UTF-8");
-							String key = decode(array[0], "UTF-8");
-							String pcIp = decode(array[5], "UTF-8");
-							LineaDatos linea = new LineaDatos(key, array[1], uri, array[3], array[4], pcIp);
-							System.out.println("#--> a Insertar: " + linea);
-							// realizarInsercion(linea);
+							String user = decode(array[0], "UTF-8");
+							String tarea = decode(array[1], "UTF-8");
+							String elem = decode(array[2], "UTF-8");
+							String uri = decode(array[3], "UTF-8");
+							String event = decode(array[4], "UTF-8");
+							String time = decode(array[5], "UTF-8");
+							String pcIp = decode(array[6], "UTF-8");
+
+							Linea linea = new Linea(user,tarea, elem, uri, event, pcIp);
+							linea.setTiempo(time);
+							SQLiteAccess.insertLinea(linea);
+							
 						} catch (UnsupportedEncodingException e) {
 							e.printStackTrace();
 						}
@@ -76,7 +84,8 @@ public class ProxyServer {
 			server.addResponseFilter(new ResponseFilter() {
 
 				@Override
-				public void filterResponse(HttpResponse response, HttpMessageContents contents, HttpMessageInfo messageInfo) {
+				public void filterResponse(HttpResponse response, HttpMessageContents contents,
+						HttpMessageInfo messageInfo) {
 					String messageContents = contents.getTextContents();
 
 					if (messageContents.contains("</HEAD>") || messageContents.contains("</head>")) {
@@ -122,11 +131,11 @@ public class ProxyServer {
 			Proxy proxy = new Proxy();
 			proxy.setProxyType(Proxy.ProxyType.MANUAL);
 			proxy.setHttpProxy(proxyInfo);
-		//	proxy.setSslProxy(proxyInfo);
+			// proxy.setSslProxy(proxyInfo);
 			proxy.setNoProxy(null);
 
 			FirefoxOptions options = new FirefoxOptions();
-		    options.addArguments("--ignore-certificate-errors");
+			options.addArguments("--ignore-certificate-errors");
 			options.setLogLevel(FirefoxDriverLogLevel.DEBUG);
 			options.setAcceptInsecureCerts(true);
 			options.addPreference("acceptSslCerts", true);
@@ -145,10 +154,5 @@ public class ProxyServer {
 			e.printStackTrace();
 			webDriver.quit();
 		}
-	}
-
-	private void realizarInsercion(LineaDatos linea) {
-		MySQLAccess db = MySQLAccess.getSingletonInstance();
-		db.insertDato(linea);
 	}
 }

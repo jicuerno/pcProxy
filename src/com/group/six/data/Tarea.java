@@ -1,30 +1,32 @@
 package com.group.six.data;
 
 public class Tarea {
-	private String idTarea;
-	private String instrucciones;
-	private String urlInicio;
-	private String urlFinal;
-	private String tiempo;
 
-	public String getIdTarea() {
-		return idTarea;
-	}
+	String keyTarea;
+	String instrucciones;
+	String urlInicio;
+	String urlFinal;
+	String tiempo;
 
 	public Tarea() {
+		super();
 	}
 
-	public Tarea(String idTarea, String instrucciones, String urlInicio, String urlFinal, String tiempo) {
+	public Tarea(String keyTarea, String instrucciones, String urlInicio, String urlFinal, String tiempo) {
 		super();
-		this.idTarea = idTarea;
+		this.keyTarea = keyTarea;
 		this.instrucciones = instrucciones;
 		this.urlInicio = urlInicio;
 		this.urlFinal = urlFinal;
 		this.tiempo = tiempo;
 	}
 
-	public void setIdTarea(String idTarea) {
-		this.idTarea = idTarea;
+	public String getKeyTarea() {
+		return keyTarea;
+	}
+
+	public void setKeyTarea(String keyTarea) {
+		this.keyTarea = keyTarea;
 	}
 
 	public String getInstrucciones() {
@@ -58,5 +60,13 @@ public class Tarea {
 	public void setTiempo(String tiempo) {
 		this.tiempo = tiempo;
 	}
+
+	@Override
+	public String toString() {
+		return "Tarea [keyTarea=" + keyTarea + ", instrucciones=" + instrucciones + ", urlInicio=" + urlInicio
+				+ ", urlFinal=" + urlFinal + ", tiempo=" + tiempo + "]";
+	}
+	
+	
 
 }

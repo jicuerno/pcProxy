@@ -2,11 +2,7 @@ package com.group.six;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.security.SecureRandom;
 import java.util.Enumeration;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.UUID;
 
 import javax.swing.AbstractButton;
 import javax.swing.ButtonGroup;
@@ -15,20 +11,18 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
-import javax.swing.SwingUtilities;
 
 import org.openqa.selenium.WebDriver;
 
-import com.fasterxml.jackson.annotation.ObjectIdGenerators.UUIDGenerator;
-import com.group.six.data.DatosXml;
-import com.group.six.data.LineaDatos;
-import com.group.six.data.LineaUser;
+import com.group.six.data.ArchivoXml;
+import com.group.six.data.Datos;
 import com.group.six.data.Tarea;
+import com.group.six.data.Usuario;
 import com.group.six.proxy.ProxyServer;
-import com.group.six.utils.MySQLAccess;
+import com.group.six.utils.SQLiteAccess;
+import com.group.six.utils.WebServicesUtils;
 import com.group.six.utils.ReadXMLFile;
 
-import javafx.application.Platform;
 import net.lightbody.bmp.BrowserMobProxy;
 
 public class ConfigFrame extends JFrame {
@@ -39,6 +33,7 @@ public class ConfigFrame extends JFrame {
 	private JTextField tfEdad;
 	private JLabel lbMesagge;
 	private JButton btnInit;
+	private JButton btnUpload;
 	private JButton btnClose;
 	private final ButtonGroup buttonGroup = new ButtonGroup();
 
@@ -102,8 +97,12 @@ public class ConfigFrame extends JFrame {
 		btnInit.setBounds(90, 205, 117, 29);
 		this.getContentPane().add(btnInit);
 
+		btnUpload = new JButton("Enviar");
+		btnUpload.setBounds(240, 205, 117, 29);
+		this.getContentPane().add(btnUpload);
+
 		btnClose = new JButton("Cerrar");
-		btnClose.setBounds(240, 205, 117, 29);
+		btnClose.setBounds(90, 245, 267, 29);
 		this.getContentPane().add(btnClose);
 
 		btnInit.addActionListener(new ActionListener() {
@@ -112,15 +111,20 @@ public class ConfigFrame extends JFrame {
 				if (tfEdad.getText().equals("")) {
 					lbMesagge.setText("error: introduce una Edad valida");
 				} else {
+					btnUpload.setEnabled(false);
+					ArchivoXml datosXml = new ReadXMLFile().getDatosXml();
 
-					DatosXml datosXml = new ReadXMLFile().getDatosXml();
-					LineaUser user = new LineaUser(datosXml.getIdUsuario(), tfEdad.getText(),
+					Usuario user = new Usuario(datosXml.getIdUsuario(), Integer.parseInt(tfEdad.getText()),
 							getSelectedButtonText(buttonGroup));
-					// realizarInsercion(user);
+
+					SQLiteAccess.insertUsuario(user);
 
 					for (Tarea tarea : datosXml.getDatos()) {
+
+						SQLiteAccess.insertTarea(tarea);
+
 						try {
-							Integer tiempo = Integer.parseInt(tarea.getTiempo()) * 100000;
+							Integer tiempo = Integer.parseInt(tarea.getTiempo()) * 60 * 1000;
 							initProxys(tarea, datosXml.getIdUsuario());
 							Thread.sleep(tiempo);
 							if (webDriver != null)
@@ -130,8 +134,8 @@ public class ConfigFrame extends JFrame {
 						} catch (Exception ex) {
 							lbMesagge.setText("error:" + ex.getMessage());
 						}
-
 					}
+					btnUpload.setEnabled(true);
 				}
 			}
 		});
@@ -148,6 +152,41 @@ public class ConfigFrame extends JFrame {
 			}
 
 		});
+
+		btnUpload.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				btnClose.setEnabled(false);
+				btnInit.setEnabled(false);
+				WebServicesUtils ws = new WebServicesUtils();
+				String isOk = " ";
+				try {
+					Datos datos = SQLiteAccess.leerUsusarios();
+					isOk = ws.invocaWebServiceHttps(datos, "usuarios");
+
+					if ("ok".equals(isOk)) {
+						SQLiteAccess.borrarUsuarios();
+						datos = SQLiteAccess.leerTareas();
+						isOk = ws.invocaWebServiceHttps(datos, "tareas");
+					}
+					if ("ok".equals(isOk)) {
+						SQLiteAccess.borrarTareas();
+						datos = SQLiteAccess.leerLineas();
+						isOk = ws.invocaWebServiceHttps(datos, "lineas");
+					}
+					if ("ok".equals(isOk)) {
+						SQLiteAccess.borrarLineas();
+					}
+				} catch (Exception e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+				btnClose.setEnabled(true);
+				btnInit.setEnabled(true);
+			}
+		});
+
 	}
 
 	private void initProxys(Tarea tarea, String idUsuario) throws Exception {
@@ -157,11 +196,6 @@ public class ConfigFrame extends JFrame {
 		lbMesagge.setText("  Iniciado en :" + servidor.direccion.getHostAddress() + " : " + servidor.puerto);
 		proxy = servidor.server;
 		webDriver = servidor.webDriver;
-	}
-
-	private void realizarInsercion(LineaUser linea) {
-		MySQLAccess db = MySQLAccess.getSingletonInstance();
-		db.insertUser(linea);
 	}
 
 	private String getSelectedButtonText(ButtonGroup buttonGroup) {

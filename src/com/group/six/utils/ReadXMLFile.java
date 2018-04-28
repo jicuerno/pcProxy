@@ -5,7 +5,7 @@ import javax.xml.parsers.DocumentBuilder;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 
-import com.group.six.data.DatosXml;
+import com.group.six.data.ArchivoXml;
 import com.group.six.data.Tarea;
 
 import org.w3c.dom.Node;
@@ -14,13 +14,13 @@ import java.io.File;
 
 public class ReadXMLFile {
 
-	private DatosXml datosXml;
+	private ArchivoXml datosXml;
 
 	public ReadXMLFile() {
 		try {
-			datosXml = new DatosXml();
+			datosXml = new ArchivoXml();
 			File fXmlFile = new File("properties.xml");
-			
+
 			if (fXmlFile != null) {
 				DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
 				DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
@@ -28,9 +28,8 @@ public class ReadXMLFile {
 				doc.getDocumentElement().normalize();
 
 				NodeList nList = doc.getElementsByTagName("idUsuario");
-				datosXml.setIdUsuario(nList.item(0).getTextContent());	
-				
-				
+				datosXml.setIdUsuario(nList.item(0).getTextContent());
+
 				nList = doc.getElementsByTagName("Tarea");
 
 				for (int temp = 0; temp < nList.getLength(); temp++) {
@@ -41,10 +40,10 @@ public class ReadXMLFile {
 
 					if (nNode.getNodeType() == Node.ELEMENT_NODE) {
 
-						Element	eElement = (Element) nNode;
+						Element eElement = (Element) nNode;
 
 						Tarea tarea = new Tarea();
-						tarea.setIdTarea(eElement.getElementsByTagName("idTarea").item(0).getTextContent());
+						tarea.setKeyTarea(eElement.getElementsByTagName("idTarea").item(0).getTextContent());	
 						tarea.setInstrucciones(eElement.getElementsByTagName("instrucciones").item(0).getTextContent());
 						tarea.setUrlInicio(eElement.getElementsByTagName("urlInicio").item(0).getTextContent());
 						tarea.setUrlFinal(eElement.getElementsByTagName("urlFinal").item(0).getTextContent());
@@ -58,7 +57,7 @@ public class ReadXMLFile {
 		}
 	}
 
-	public DatosXml getDatosXml() {
+	public ArchivoXml getDatosXml() {
 		return datosXml;
 	}
 
