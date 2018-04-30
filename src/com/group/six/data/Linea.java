@@ -15,7 +15,7 @@ public class Linea {
 	public Linea() {
 		super();
 	}
-
+	
 	public Linea(String keyUsuario, String keyTarea, String elemento, String url, String evento, Date tiempo,
 			String pcIp) {
 		super();

@@ -120,7 +120,7 @@ public class SQLiteAccess {
 		try {
 			connect();
 			stmt = connect.createStatement();
-			rs = stmt.executeQuery("SELECT * FROM request;");
+			rs = stmt.executeQuery("SELECT keyUser, keyTarea, element, url, event, time, pcIp FROM request;");
 
 			while (rs.next())
 				datos.getLineas().add(new Linea(rs.getString(1), rs.getString(2), rs.getString(3), rs.getString(4),
@@ -147,7 +147,7 @@ public class SQLiteAccess {
 		try {
 			connect();
 			stmt = connect.createStatement();
-			rs = stmt.executeQuery("SELECT * FROM usuario;");
+			rs = stmt.executeQuery("SELECT keyUser, edad, sexo  FROM usuario;");
 
 			while (rs.next())
 				datos.getUsuarios().add(new Usuario(rs.getString(1), rs.getInt(2), rs.getString(3)));
@@ -173,7 +173,7 @@ public class SQLiteAccess {
 		try {
 			connect();
 			stmt = connect.createStatement();
-			rs = stmt.executeQuery("SELECT * FROM tarea;");
+			rs = stmt.executeQuery("SELECT keyTarea, instrucciones, urlInit, urlFin, tiempo FROM tarea;");
 
 			while (rs.next())
 				datos.getTareas().add(
@@ -198,20 +198,11 @@ public class SQLiteAccess {
 	public static void borrarTareas() {
 		try {
 			connect();
-			connect();
-			stmt = connect.createStatement();
-			rs = stmt.executeQuery("DELETE FROM tarea;");
+			preparedStatement = connect.prepareStatement("DELETE FROM tarea");
+			preparedStatement.execute();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} finally {
-			try {
-				if (rs != null)
-					rs.close();
-				if (stmt != null)
-					stmt.close();
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
 			disConnect();
 		}
 	}
@@ -219,20 +210,11 @@ public class SQLiteAccess {
 	public static void borrarUsuarios() {
 		try {
 			connect();
-			connect();
-			stmt = connect.createStatement();
-			rs = stmt.executeQuery("DELETE FROM usuario;");
+			preparedStatement = connect.prepareStatement("DELETE FROM usuario");
+			preparedStatement.execute();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} finally {
-			try {
-				if (rs != null)
-					rs.close();
-				if (stmt != null)
-					stmt.close();
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
 			disConnect();
 		}
 	}
@@ -240,20 +222,12 @@ public class SQLiteAccess {
 	public static void borrarLineas() {
 		try {
 			connect();
-			connect();
-			stmt = connect.createStatement();
-			rs = stmt.executeQuery("DELETE FROM request;");
+			preparedStatement = connect.prepareStatement("DELETE FROM request");
+			preparedStatement.execute();
+
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} finally {
-			try {
-				if (rs != null)
-					rs.close();
-				if (stmt != null)
-					stmt.close();
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
 			disConnect();
 		}
 	}

@@ -32,12 +32,10 @@ import net.lightbody.bmp.util.HttpMessageInfo;
 public class ProxyServer {
 
 	public BrowserMobProxy server;
-	public Integer puerto;
-	public InetAddress direccion;
 	public WebDriver webDriver;
 	private String script;
 
-	public ProxyServer(String port, String ip, String user, Tarea tarea) throws Exception {
+	public ProxyServer(Integer puerto, InetAddress direccion, String user, Tarea tarea) throws Exception {
 
 		server = new BrowserMobProxyServer();
 		// server.setTrustAllServers(true);
@@ -56,16 +54,16 @@ public class ProxyServer {
 						String messageContents = contents.getTextContents();
 						
 						messageContents = messageContents.replace("keyUser=", "").replace("keyTarea=", "")
-								.replace("elem=", "").replace("url=", "").replace("event=", "").replace("time=", "")
+								.replace("event=", "").replace("url=", "").replace("id=", "").replace("time=", "")
 								.replace("pcIp=", "");
 						
 						String[] array = messageContents.split("&");
 						try {
 							String user = decode(array[0], "UTF-8");
 							String tarea = decode(array[1], "UTF-8");
-							String elem = decode(array[2], "UTF-8");
+							String event = decode(array[2], "UTF-8");
 							String uri = decode(array[3], "UTF-8");
-							String event = decode(array[4], "UTF-8");
+							String elem = decode(array[4], "UTF-8");
 							String time = decode(array[5], "UTF-8");
 							String pcIp = decode(array[6], "UTF-8");
 
@@ -100,19 +98,11 @@ public class ProxyServer {
 				}
 			});
 
-			if (!port.equals(""))
-				puerto = Integer.parseInt(port);
-			else
-				puerto = 9090;
-			if (!ip.equals(""))
-				direccion = InetAddress.getByName(ip);
-			else
-				direccion = InetAddress.getLocalHost();
+	
 
 			server.start(puerto, direccion);
 			System.out.println("PROXY iniciado:" + direccion.getHostAddress() + ":8080");
 			server.enableHarCaptureTypes(CaptureType.REQUEST_CONTENT, CaptureType.RESPONSE_CONTENT);
-
 			setProfileFirefox(puerto, direccion.getHostAddress(), tarea);
 
 		} catch (Exception e) {

@@ -2,6 +2,7 @@ package com.group.six;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.net.InetAddress;
 import java.util.Enumeration;
 
 import javax.swing.AbstractButton;
@@ -19,9 +20,9 @@ import com.group.six.data.Datos;
 import com.group.six.data.Tarea;
 import com.group.six.data.Usuario;
 import com.group.six.proxy.ProxyServer;
+import com.group.six.utils.ReadXMLFile;
 import com.group.six.utils.SQLiteAccess;
 import com.group.six.utils.WebServicesUtils;
-import com.group.six.utils.ReadXMLFile;
 
 import net.lightbody.bmp.BrowserMobProxy;
 
@@ -39,6 +40,9 @@ public class ConfigFrame extends JFrame {
 
 	private BrowserMobProxy proxy;
 	private WebDriver webDriver;
+
+	private Integer port;
+	private InetAddress direccion;
 
 	public ConfigFrame() {
 		this.setTitle("Formulario Inicial");
@@ -105,38 +109,61 @@ public class ConfigFrame extends JFrame {
 		btnClose.setBounds(90, 245, 267, 29);
 		this.getContentPane().add(btnClose);
 
+		this.getContentPane();
+
 		btnInit.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				if (tfEdad.getText().equals("")) {
 					lbMesagge.setText("error: introduce una Edad valida");
 				} else {
-					btnUpload.setEnabled(false);
-					ArchivoXml datosXml = new ReadXMLFile().getDatosXml();
-
-					Usuario user = new Usuario(datosXml.getIdUsuario(), Integer.parseInt(tfEdad.getText()),
-							getSelectedButtonText(buttonGroup));
-
-					SQLiteAccess.insertUsuario(user);
-
-					for (Tarea tarea : datosXml.getDatos()) {
-
-						SQLiteAccess.insertTarea(tarea);
-
-						try {
-							Integer tiempo = Integer.parseInt(tarea.getTiempo()) * 60 * 1000;
-							initProxys(tarea, datosXml.getIdUsuario());
-							Thread.sleep(tiempo);
-							if (webDriver != null)
-								webDriver.quit();
-							if (proxy != null)
-								proxy.stop();
-						} catch (Exception ex) {
-							lbMesagge.setText("error:" + ex.getMessage());
-						}
-					}
-					btnUpload.setEnabled(true);
+					InitProxy();
 				}
+			}
+
+			private void InitProxy() {
+				btnUpload.setEnabled(false);
+
+				if (!tfPort.getText().toString().equals(""))
+					port = Integer.parseInt(tfPort.getText());
+				else {
+					port = 9090;
+					setTextPort();
+				}
+				try {
+					if (!tfIp.getText().toString().equals(""))
+						direccion = InetAddress.getByName(tfIp.getText());
+					else {
+						direccion = InetAddress.getLocalHost();
+						setTextIp();
+					}
+				} catch (Exception e1) {
+					lbMesagge.setText("error:" + e1.getMessage());
+				}
+
+				ArchivoXml datosXml = new ReadXMLFile().getDatosXml();
+				Usuario user = new Usuario(datosXml.getIdUsuario(), Integer.parseInt(tfEdad.getText()),
+						getSelectedButtonText(buttonGroup));
+
+				SQLiteAccess.insertUsuario(user);
+
+				for (Tarea tarea : datosXml.getDatos()) {
+
+					SQLiteAccess.insertTarea(tarea);
+
+					try {
+						Integer tiempo = Integer.parseInt(tarea.getTiempo()) * 60 * 1000;
+						initProxys(tarea, datosXml.getIdUsuario());
+						Thread.sleep(tiempo);
+						if (webDriver != null)
+							webDriver.quit();
+						if (proxy != null)
+							proxy.stop();
+					} catch (Exception ex) {
+						lbMesagge.setText("error:" + ex.getMessage());
+					}
+				}
+				btnUpload.setEnabled(true);
 			}
 		});
 
@@ -160,23 +187,51 @@ public class ConfigFrame extends JFrame {
 				btnClose.setEnabled(false);
 				btnInit.setEnabled(false);
 				WebServicesUtils ws = new WebServicesUtils();
-				String isOk = " ";
-				try {
-					Datos datos = SQLiteAccess.leerUsusarios();
-					isOk = ws.invocaWebServiceHttps(datos, "usuarios");
+				String isOk = "";
 
-					if ("ok".equals(isOk)) {
+				try {
+
+					Datos datos = SQLiteAccess.leerUsusarios();
+					if (!datos.getUsuarios().isEmpty()) {
+						try {
+							isOk = ws.invocaWebServiceHttp(datos, "usuarios");
+						} catch (Exception ex) {
+							isOk = "";
+						}
+					}
+
+					if ("isOk".equals(isOk)) {
 						SQLiteAccess.borrarUsuarios();
-						datos = SQLiteAccess.leerTareas();
-						isOk = ws.invocaWebServiceHttps(datos, "tareas");
+						isOk = "";
 					}
-					if ("ok".equals(isOk)) {
+
+					datos = SQLiteAccess.leerTareas();
+
+					if (!datos.getTareas().isEmpty()) {
+						try {
+							isOk = ws.invocaWebServiceHttp(datos, "tareas");
+						} catch (Exception ex) {
+							isOk = "";
+						}
+					}
+
+					if ("isOk".equals(isOk)) {
 						SQLiteAccess.borrarTareas();
-						datos = SQLiteAccess.leerLineas();
-						isOk = ws.invocaWebServiceHttps(datos, "lineas");
+						isOk = "";
 					}
-					if ("ok".equals(isOk)) {
+
+					datos = SQLiteAccess.leerLineas();
+					if (!datos.getLineas().isEmpty()) {
+						try {
+							isOk = ws.invocaWebServiceHttp(datos, "lineas");
+						} catch (Exception ex) {
+							isOk = "";
+						}
+					}
+
+					if ("isOk".equals(isOk)) {
 						SQLiteAccess.borrarLineas();
+						System.out.println("Todo Ok");
 					}
 				} catch (Exception e1) {
 					// TODO Auto-generated catch block
@@ -187,13 +242,14 @@ public class ConfigFrame extends JFrame {
 			}
 		});
 
+		this.setVisible(true);
 	}
 
+	
+
 	private void initProxys(Tarea tarea, String idUsuario) throws Exception {
-		ProxyServer servidor = new ProxyServer(tfPort.getText(), tfIp.getText(), idUsuario, tarea);
-		tfPort.setText(servidor.puerto.toString());
-		tfIp.setText(servidor.direccion.getHostAddress());
-		lbMesagge.setText("  Iniciado en :" + servidor.direccion.getHostAddress() + " : " + servidor.puerto);
+		ProxyServer servidor = new ProxyServer(port, direccion, idUsuario, tarea);
+		lbMesagge.setText("  Iniciado en :" + direccion.getHostAddress() + " : " + port);
 		proxy = servidor.server;
 		webDriver = servidor.webDriver;
 	}
@@ -208,5 +264,15 @@ public class ConfigFrame extends JFrame {
 		}
 
 		return null;
+	}
+
+	private void setTextPort() {
+		tfPort.setText(port.toString());
+		tfPort.setVisible(true);
+	}
+
+	private void setTextIp() {
+		tfIp.setText(direccion.getHostAddress());
+		tfIp.setVisible(true);
 	}
 }
