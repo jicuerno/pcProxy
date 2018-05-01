@@ -8,21 +8,21 @@ import java.io.IOException;
 
 public class Scripts {
 
-	public String clickScript(String uuid) {
+	public String clickScript(String user, String tarea) {
 		StringBuilder builder = new StringBuilder();
 		builder.append("\n <!-- Insercion -->\n");
-		builder.append("<script src=\"data:text/javascript;base64," + obtenerScriptBase64(uuid, "jQuery") + "\"></script>\n");
-		builder.append("<script src=\"data:text/javascript;base64," + obtenerScriptBase64(uuid, "click") + "\"></script>\n");
+		builder.append("<script src=\"data:text/javascript;base64," + obtenerScriptBase64(user,tarea, "jQuery") + "\"></script>\n");
+		builder.append("<script src=\"data:text/javascript;base64," + obtenerScriptBase64(user,tarea, "click") + "\"></script>\n");
 		builder.append("</head>\n");
 		return builder.toString();
 	}
 
-	private String obtenerScriptBase64(String uuid, String name) {
+	private String obtenerScriptBase64(String user, String tarea ,String name) {
 		String cadena;
 		FileReader f;
 		StringBuilder builder = new StringBuilder();
 		try {
-			f = new FileReader(new File("").getAbsolutePath() + "\\src\\com\\group\\six\\js\\" + name + ".js");
+			f = new FileReader(new File("").getAbsolutePath() + "/src/com/group/six/js/" + name + ".js");
 			BufferedReader b = new BufferedReader(f);
 			while ((cadena = b.readLine()) != null) {
 				builder.append(cadena + "\n");
@@ -35,7 +35,6 @@ public class Scripts {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-
-		return MyBase64.encode(builder.toString().replace("####Sustituir####", uuid));
+		return MyBase64.encode(builder.toString().replace("####keyUser####", user).replace("####keyTarea####", tarea));
 	}
 }

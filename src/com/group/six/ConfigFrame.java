@@ -2,9 +2,8 @@ package com.group.six;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.security.SecureRandom;
+import java.net.InetAddress;
 import java.util.Enumeration;
-import java.util.UUID;
 
 import javax.swing.AbstractButton;
 import javax.swing.ButtonGroup;
@@ -16,19 +15,18 @@ import javax.swing.JTextField;
 
 import org.openqa.selenium.WebDriver;
 
-import com.fasterxml.jackson.annotation.ObjectIdGenerators.UUIDGenerator;
-import com.group.six.data.DatosXml;
-import com.group.six.data.LineaDatos;
-import com.group.six.data.LineaUser;
+import com.group.six.data.ArchivoXml;
+import com.group.six.data.Datos;
 import com.group.six.data.Tarea;
+import com.group.six.data.Usuario;
 import com.group.six.proxy.ProxyServer;
-import com.group.six.utils.MySQLAccess;
 import com.group.six.utils.ReadXMLFile;
+import com.group.six.utils.SQLiteAccess;
+import com.group.six.utils.WebServicesUtils;
 
 import net.lightbody.bmp.BrowserMobProxy;
 
 public class ConfigFrame extends JFrame {
-
 
 	private static final long serialVersionUID = -7147860617586130063L;
 	private JTextField tfPort;
@@ -36,13 +34,15 @@ public class ConfigFrame extends JFrame {
 	private JTextField tfEdad;
 	private JLabel lbMesagge;
 	private JButton btnInit;
+	private JButton btnUpload;
 	private JButton btnClose;
 	private final ButtonGroup buttonGroup = new ButtonGroup();
 
 	private BrowserMobProxy proxy;
 	private WebDriver webDriver;
 
-
+	private Integer port;
+	private InetAddress direccion;
 
 	public ConfigFrame() {
 		this.setTitle("Formulario Inicial");
@@ -52,7 +52,7 @@ public class ConfigFrame extends JFrame {
 		this.getContentPane().setLayout(null);
 
 		lbMesagge = new JLabel(" ");
-		lbMesagge.setBounds(20, 20, 200, 16);
+		lbMesagge.setBounds(20, 20, 300, 16);
 		this.getContentPane().add(lbMesagge);
 
 		JLabel lblEdad = new JLabel("Edad:");
@@ -101,57 +101,141 @@ public class ConfigFrame extends JFrame {
 		btnInit.setBounds(90, 205, 117, 29);
 		this.getContentPane().add(btnInit);
 
+		btnUpload = new JButton("Enviar");
+		btnUpload.setBounds(240, 205, 117, 29);
+		this.getContentPane().add(btnUpload);
+
 		btnClose = new JButton("Cerrar");
-		btnClose.setBounds(240, 205, 117, 29);
+		btnClose.setBounds(90, 245, 267, 29);
 		this.getContentPane().add(btnClose);
+
+		this.getContentPane();
 
 		btnInit.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				try {
-
-					if (tfEdad.getText().equals("")) {
-						lbMesagge.setText("error: introduce una Edad valida");
-					} else
-						initProxys();
-				} catch (Exception ex) {
-					lbMesagge.setText("error:" + ex.getMessage());
+				if (tfEdad.getText().equals("")) {
+					lbMesagge.setText("error: introduce una Edad valida");
+				} else {
+					InitProxy();
 				}
 			}
 
+			private void InitProxy() {
+				btnUpload.setEnabled(false);
+
+				if (!tfPort.getText().toString().equals(""))
+					port = Integer.parseInt(tfPort.getText());
+				else {
+					port = 9090;
+					setTextPort();
+				}
+				try {
+					if (!tfIp.getText().toString().equals(""))
+						direccion = InetAddress.getByName(tfIp.getText());
+					else {
+						direccion = InetAddress.getLocalHost();
+						setTextIp();
+					}
+				} catch (Exception e1) {
+					lbMesagge.setText("error:" + e1.getMessage());
+				}
+
+				ArchivoXml datosXml = new ReadXMLFile().getDatosXml();
+				Usuario user = new Usuario(datosXml.getIdUsuario(), Integer.parseInt(tfEdad.getText()),
+						getSelectedButtonText(buttonGroup));
+
+				SQLiteAccess.insertUsuario(user);
+				new Thread(ejecutaProxys(datosXml)).start();
+				btnUpload.setEnabled(true);
+			}
 		});
 
 		btnClose.addActionListener(new ActionListener() {
+
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				if (proxy != null)
-					proxy.stop();
 				if (webDriver != null)
 					webDriver.quit();
+				if (proxy != null && proxy.isStarted())
+					proxy.stop();
 				dispose();
 			}
+
 		});
+
+		btnUpload.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				btnClose.setEnabled(false);
+				btnInit.setEnabled(false);
+				WebServicesUtils ws = new WebServicesUtils();
+				String isOk = "";
+
+				try {
+
+					Datos datos = SQLiteAccess.leerUsusarios();
+					if (!datos.getUsuarios().isEmpty()) {
+						try {
+							isOk = ws.invocaWebServiceHttp(datos, "usuarios");
+						} catch (Exception ex) {
+							isOk = "";
+						}
+					}
+
+					if ("isOk".equals(isOk)) {
+						SQLiteAccess.borrarUsuarios();
+						isOk = "";
+					}
+
+					datos = SQLiteAccess.leerTareas();
+
+					if (!datos.getTareas().isEmpty()) {
+						try {
+							isOk = ws.invocaWebServiceHttp(datos, "tareas");
+						} catch (Exception ex) {
+							isOk = "";
+						}
+					}
+
+					if ("isOk".equals(isOk)) {
+						SQLiteAccess.borrarTareas();
+						isOk = "";
+					}
+
+					datos = SQLiteAccess.leerLineas();
+					if (!datos.getLineas().isEmpty()) {
+						try {
+							isOk = ws.invocaWebServiceHttp(datos, "lineas");
+						} catch (Exception ex) {
+							isOk = "";
+						}
+					}
+
+					if ("isOk".equals(isOk)) {
+						SQLiteAccess.borrarLineas();
+						System.out.println("Todo Ok");
+						lbMesagge.setText("Resulado del envío: Ok");
+					}
+				} catch (Exception e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+					lbMesagge.setText("Error: "+ e1.getMessage());
+				}
+				btnClose.setEnabled(true);
+				btnInit.setEnabled(true);
+			}
+		});
+
+		this.setVisible(true);
 	}
 
-	private void initProxys() throws Exception {
-		DatosXml datosXml = new ReadXMLFile().getDatosXml();
-		LineaUser user = new LineaUser(datosXml.getIdUsuario(), tfEdad.getText(), getSelectedButtonText(buttonGroup));
-		// realizarInsercion(user);
-
-		for (Tarea tarea : datosXml.getDatos()) {
-			ProxyServer servidor = new ProxyServer(tfPort.getText(), tfIp.getText(), datosXml.getIdUsuario(),tarea);
-			tfPort.setText(servidor.puerto.toString());
-			tfIp.setText(servidor.direccion.getHostAddress());
-			lbMesagge.setText("  Iniciado en :" + servidor.direccion.getHostAddress() + " : " + servidor.puerto);
-			proxy = servidor.server;
-			webDriver = servidor.webDriver;
-
-		}
-	}
-
-	private void realizarInsercion(LineaUser linea) {
-		MySQLAccess db = MySQLAccess.getSingletonInstance();
-		db.insertUser(linea);
+	private void initProxys(Tarea tarea, String idUsuario) throws Exception {
+		ProxyServer servidor = new ProxyServer(port, direccion, idUsuario, tarea);
+		lbMesagge.setText("  Iniciado en :" + direccion.getHostAddress() + " : " + port);
+		proxy = servidor.server;
+		webDriver = servidor.webDriver;
 	}
 
 	private String getSelectedButtonText(ButtonGroup buttonGroup) {
@@ -165,4 +249,39 @@ public class ConfigFrame extends JFrame {
 
 		return null;
 	}
+
+	private void setTextPort() {
+		tfPort.setText(port.toString());
+		tfPort.setVisible(true);
+	}
+
+	private void setTextIp() {
+		tfIp.setText(direccion.getHostAddress());
+		tfIp.setVisible(true);
+	}
+
+	private Runnable ejecutaProxys(ArchivoXml datosXml) {
+
+		return ((Runnable) new Runnable() {
+			public void run() {
+				for (Tarea tarea : datosXml.getDatos()) {
+
+					SQLiteAccess.insertTarea(tarea);
+
+					try {
+						Integer tiempo = Integer.parseInt(tarea.getTiempo()) * 60 * 1000;
+						initProxys(tarea, datosXml.getIdUsuario());
+						Thread.sleep(tiempo);
+						if (webDriver != null)
+							webDriver.quit();
+						if (proxy != null)
+							proxy.stop();
+					} catch (Exception ex) {
+						lbMesagge.setText("error:" + ex.getMessage());
+					}
+				}
+			}
+		});
+	}
+
 }
