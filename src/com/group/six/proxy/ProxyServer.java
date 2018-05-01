@@ -52,11 +52,11 @@ public class ProxyServer {
 					String url = messageInfo.getOriginalUrl().toLowerCase();
 					if (url.contains("www.myservice.com")) {
 						String messageContents = contents.getTextContents();
-						
+
 						messageContents = messageContents.replace("keyUser=", "").replace("keyTarea=", "")
 								.replace("event=", "").replace("url=", "").replace("id=", "").replace("time=", "")
 								.replace("pcIp=", "");
-						
+
 						String[] array = messageContents.split("&");
 						try {
 							String user = decode(array[0], "UTF-8");
@@ -67,10 +67,9 @@ public class ProxyServer {
 							String time = decode(array[5], "UTF-8");
 							String pcIp = decode(array[6], "UTF-8");
 
-							Linea linea = new Linea(user,tarea, elem, uri, event, pcIp);
-							linea.setTiempo(time);
+							Linea linea = new Linea(user, tarea, elem, uri, event, time,pcIp);
 							SQLiteAccess.insertLinea(linea);
-							
+
 						} catch (UnsupportedEncodingException e) {
 							e.printStackTrace();
 						}
@@ -98,8 +97,6 @@ public class ProxyServer {
 				}
 			});
 
-	
-
 			server.start(puerto, direccion);
 			System.out.println("PROXY iniciado:" + direccion.getHostAddress() + ":8080");
 			server.enableHarCaptureTypes(CaptureType.REQUEST_CONTENT, CaptureType.RESPONSE_CONTENT);
@@ -114,14 +111,20 @@ public class ProxyServer {
 	private void setProfileFirefox(int port, String ip, Tarea tarea) {
 
 		webDriver = null;
+		boolean http = tarea.getUrlInicio().toLowerCase().contains("http://")
+				|| tarea.getUrlFinal().toLowerCase().contains("http://");
+		boolean https = tarea.getUrlInicio().toLowerCase().contains("https://")
+				|| tarea.getUrlFinal().toLowerCase().contains("https://");
 
 		try {
+
 			String path = new File("").getAbsolutePath();
 			String proxyInfo = ip + ":" + port;
 			Proxy proxy = new Proxy();
 			proxy.setProxyType(Proxy.ProxyType.MANUAL);
-			proxy.setHttpProxy(proxyInfo);
-			// proxy.setSslProxy(proxyInfo);
+			
+			if (http) proxy.setHttpProxy(proxyInfo);
+			if (https) proxy.setSslProxy(proxyInfo);
 			proxy.setNoProxy(null);
 
 			FirefoxOptions options = new FirefoxOptions();

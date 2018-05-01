@@ -2,7 +2,6 @@ package com.group.six.utils;
 
 import java.io.File;
 import java.sql.Connection;
-import java.sql.Date;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -98,7 +97,7 @@ public class SQLiteAccess {
 			preparedStatement.setString(3, linea.getElemento());
 			preparedStatement.setString(4, linea.getUrl());
 			preparedStatement.setString(5, linea.getEvento());
-			preparedStatement.setString(6, String.valueOf(linea.getTiempo().getTime()));
+			preparedStatement.setString(6, linea.getTiempo());
 			preparedStatement.setString(7, linea.getPcIp());
 			preparedStatement.executeUpdate();
 			System.out.println("insertado: " + linea.toString());
@@ -124,7 +123,7 @@ public class SQLiteAccess {
 
 			while (rs.next())
 				datos.getLineas().add(new Linea(rs.getString(1), rs.getString(2), rs.getString(3), rs.getString(4),
-						rs.getString(5), new Date(Long.parseLong(rs.getString(6))), rs.getString(7)));
+						rs.getString(5), rs.getString(6), rs.getString(7)));
 
 		} catch (SQLException e) {
 			e.printStackTrace();

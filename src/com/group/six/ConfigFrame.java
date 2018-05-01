@@ -52,7 +52,7 @@ public class ConfigFrame extends JFrame {
 		this.getContentPane().setLayout(null);
 
 		lbMesagge = new JLabel(" ");
-		lbMesagge.setBounds(20, 20, 200, 16);
+		lbMesagge.setBounds(20, 20, 300, 16);
 		this.getContentPane().add(lbMesagge);
 
 		JLabel lblEdad = new JLabel("Edad:");
@@ -146,23 +146,7 @@ public class ConfigFrame extends JFrame {
 						getSelectedButtonText(buttonGroup));
 
 				SQLiteAccess.insertUsuario(user);
-
-				for (Tarea tarea : datosXml.getDatos()) {
-
-					SQLiteAccess.insertTarea(tarea);
-
-					try {
-						Integer tiempo = Integer.parseInt(tarea.getTiempo()) * 60 * 1000;
-						initProxys(tarea, datosXml.getIdUsuario());
-						Thread.sleep(tiempo);
-						if (webDriver != null)
-							webDriver.quit();
-						if (proxy != null)
-							proxy.stop();
-					} catch (Exception ex) {
-						lbMesagge.setText("error:" + ex.getMessage());
-					}
-				}
+				new Thread(ejecutaProxys(datosXml)).start();
 				btnUpload.setEnabled(true);
 			}
 		});
@@ -173,7 +157,7 @@ public class ConfigFrame extends JFrame {
 			public void actionPerformed(ActionEvent e) {
 				if (webDriver != null)
 					webDriver.quit();
-				if (proxy != null)
+				if (proxy != null && proxy.isStarted())
 					proxy.stop();
 				dispose();
 			}
@@ -232,10 +216,12 @@ public class ConfigFrame extends JFrame {
 					if ("isOk".equals(isOk)) {
 						SQLiteAccess.borrarLineas();
 						System.out.println("Todo Ok");
+						lbMesagge.setText("Resulado del envío: Ok");
 					}
 				} catch (Exception e1) {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
+					lbMesagge.setText("Error: "+ e1.getMessage());
 				}
 				btnClose.setEnabled(true);
 				btnInit.setEnabled(true);
@@ -244,8 +230,6 @@ public class ConfigFrame extends JFrame {
 
 		this.setVisible(true);
 	}
-
-	
 
 	private void initProxys(Tarea tarea, String idUsuario) throws Exception {
 		ProxyServer servidor = new ProxyServer(port, direccion, idUsuario, tarea);
@@ -275,4 +259,29 @@ public class ConfigFrame extends JFrame {
 		tfIp.setText(direccion.getHostAddress());
 		tfIp.setVisible(true);
 	}
+
+	private Runnable ejecutaProxys(ArchivoXml datosXml) {
+
+		return ((Runnable) new Runnable() {
+			public void run() {
+				for (Tarea tarea : datosXml.getDatos()) {
+
+					SQLiteAccess.insertTarea(tarea);
+
+					try {
+						Integer tiempo = Integer.parseInt(tarea.getTiempo()) * 60 * 1000;
+						initProxys(tarea, datosXml.getIdUsuario());
+						Thread.sleep(tiempo);
+						if (webDriver != null)
+							webDriver.quit();
+						if (proxy != null)
+							proxy.stop();
+					} catch (Exception ex) {
+						lbMesagge.setText("error:" + ex.getMessage());
+					}
+				}
+			}
+		});
+	}
+
 }
