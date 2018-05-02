@@ -221,7 +221,7 @@ public class ConfigFrame extends JFrame {
 				} catch (Exception e1) {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
-					lbMesagge.setText("Error: "+ e1.getMessage());
+					lbMesagge.setText("Error: " + e1.getMessage());
 				}
 				btnClose.setEnabled(true);
 				btnInit.setEnabled(true);
@@ -269,7 +269,7 @@ public class ConfigFrame extends JFrame {
 					SQLiteAccess.insertTarea(tarea);
 
 					try {
-						Integer tiempo = Integer.parseInt(tarea.getTiempo()) * 60 * 1000;
+						Integer tiempo = Integer.parseInt(tarea.getTiempo()) * 1000;
 						initProxys(tarea, datosXml.getIdUsuario());
 						Thread.sleep(tiempo);
 						if (webDriver != null)
