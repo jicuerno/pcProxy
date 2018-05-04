@@ -25,6 +25,8 @@ import net.lightbody.bmp.BrowserMobProxy;
 import net.lightbody.bmp.BrowserMobProxyServer;
 import net.lightbody.bmp.filters.RequestFilter;
 import net.lightbody.bmp.filters.ResponseFilter;
+import net.lightbody.bmp.mitm.RootCertificateGenerator;
+import net.lightbody.bmp.mitm.manager.ImpersonatingMitmManager;
 import net.lightbody.bmp.proxy.CaptureType;
 import net.lightbody.bmp.util.HttpMessageContents;
 import net.lightbody.bmp.util.HttpMessageInfo;
@@ -37,8 +39,19 @@ public class ProxyServer {
 
 	public ProxyServer(Integer puerto, InetAddress direccion, String user, Tarea tarea) throws Exception {
 
+		String path = new File("").getAbsolutePath();
+		RootCertificateGenerator rootCG = RootCertificateGenerator.builder().build();
+		rootCG.saveRootCertificateAsPemFile(new File(path + "/certs/certificate.cer"));
+		rootCG.savePrivateKeyAsPemFile(new File(path + "/certs/private-key.pem"), "password");
+		rootCG.saveRootCertificateAndKey("PKCS12", new File(path + "/certs/keystore.p12"), "privateKeyAlias",
+				"password");
+		ImpersonatingMitmManager mitmManager = ImpersonatingMitmManager.builder().rootCertificateSource(rootCG).build();
+
+		// HttpProxyServerBootstrap bootstrap =
+		// DefaultHttpProxyServer.bootstrap().withManInTheMiddle(mitmManager);
+
 		server = new BrowserMobProxyServer();
-		// server.setTrustAllServers(true);
+		server.setMitmManager(mitmManager);
 
 		script = new Scripts().clickScript(user, tarea.getKeyTarea());
 		System.out.println(script);
@@ -67,7 +80,7 @@ public class ProxyServer {
 							String time = decode(array[5], "UTF-8");
 							String pcIp = decode(array[6], "UTF-8");
 
-							Linea linea = new Linea(user, tarea, elem, uri, event, time,pcIp);
+							Linea linea = new Linea(user, tarea, elem, uri, event, time, pcIp);
 							SQLiteAccess.insertLinea(linea);
 
 						} catch (UnsupportedEncodingException e) {
@@ -110,21 +123,17 @@ public class ProxyServer {
 
 	private void setProfileFirefox(int port, String ip, Tarea tarea) {
 
+		String path = new File("").getAbsolutePath();
+
 		webDriver = null;
-		boolean http = tarea.getUrlInicio().toLowerCase().contains("http://")
-				|| tarea.getUrlFinal().toLowerCase().contains("http://");
-		boolean https = tarea.getUrlInicio().toLowerCase().contains("https://")
-				|| tarea.getUrlFinal().toLowerCase().contains("https://");
 
 		try {
 
-			String path = new File("").getAbsolutePath();
 			String proxyInfo = ip + ":" + port;
 			Proxy proxy = new Proxy();
 			proxy.setProxyType(Proxy.ProxyType.MANUAL);
-			
-			if (http) proxy.setHttpProxy(proxyInfo);
-			if (https) proxy.setSslProxy(proxyInfo);
+			proxy.setHttpProxy(proxyInfo);
+			proxy.setSslProxy(proxyInfo);
 			proxy.setNoProxy(null);
 
 			FirefoxOptions options = new FirefoxOptions();
@@ -133,6 +142,7 @@ public class ProxyServer {
 			options.setAcceptInsecureCerts(true);
 			options.addPreference("acceptSslCerts", true);
 			options.addPreference("enableNativeEvents", true);
+			options.addPreference("security.mixed_content.block_active_content", false);
 			options.setProxy(proxy);
 			options.setCapability(CapabilityType.PROXY, proxy);
 			options.setCapability("marionette", true);

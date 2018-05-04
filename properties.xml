@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Datos>
 	<idUsuario>id1</idUsuario>
-	<Tarea>
-		<idTarea>t1</idTarea>
-		<instrucciones>en un lugar de la mancha</instrucciones>
-		<urlInicio>http://www.zentut.com/java-swing/simple-login-dialog/</urlInicio>
-		<urlFinal>http://www.madrid.org</urlFinal>
-		<tiempo>2</tiempo>
-	</Tarea>
+<!-- 	<Tarea> -->
+<!-- 		<idTarea>t1</idTarea> -->
+<!-- 		<instrucciones>en un lugar de la mancha</instrucciones> -->
+<!-- 		<urlInicio>http://www.zentut.com/java-swing/simple-login-dialog/</urlInicio> -->
+<!-- 		<urlFinal>http://www.madrid.org</urlFinal> -->
+<!-- 		<tiempo>2</tiempo> -->
+<!-- 	</Tarea> -->
 
 	<Tarea>
 		<idTarea>t2</idTarea>
 		<instrucciones>otras instrucciones</instrucciones>
 		<urlInicio>https://www.ehu.eus/eu/home</urlInicio>
 		<urlFinal>http://www.madrid.org</urlFinal>
-		<tiempo>2</tiempo>
+		<tiempo>20</tiempo>
 	</Tarea>
 </Datos>
