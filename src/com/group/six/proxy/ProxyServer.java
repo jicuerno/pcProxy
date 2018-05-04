@@ -33,27 +33,31 @@ import net.lightbody.bmp.util.HttpMessageInfo;
 
 public class ProxyServer {
 
-	public BrowserMobProxy server;
-	public WebDriver webDriver;
+	private BrowserMobProxy server;
+	private WebDriver webDriver;
 	private String script;
+	private String user;
+	private Tarea tarea;
 
-	public ProxyServer(Integer puerto, InetAddress direccion, String user, Tarea tarea) throws Exception {
+	public ProxyServer() {
+
+	}
+
+	public void init(Integer puerto, InetAddress direccion) throws Exception {
 
 		String path = new File("").getAbsolutePath();
 		RootCertificateGenerator rootCG = RootCertificateGenerator.builder().build();
+
 		rootCG.saveRootCertificateAsPemFile(new File(path + "/certs/certificate.cer"));
 		rootCG.savePrivateKeyAsPemFile(new File(path + "/certs/private-key.pem"), "password");
 		rootCG.saveRootCertificateAndKey("PKCS12", new File(path + "/certs/keystore.p12"), "privateKeyAlias",
 				"password");
 		ImpersonatingMitmManager mitmManager = ImpersonatingMitmManager.builder().rootCertificateSource(rootCG).build();
 
-		// HttpProxyServerBootstrap bootstrap =
-		// DefaultHttpProxyServer.bootstrap().withManInTheMiddle(mitmManager);
-
 		server = new BrowserMobProxyServer();
 		server.setMitmManager(mitmManager);
 
-		script = new Scripts().clickScript(user, tarea.getKeyTarea());
+		script = new Scripts().clickScript();
 		System.out.println(script);
 
 		try {
@@ -66,23 +70,22 @@ public class ProxyServer {
 					if (url.contains("www.myservice.com")) {
 						String messageContents = contents.getTextContents();
 
-						messageContents = messageContents.replace("keyUser=", "").replace("keyTarea=", "")
-								.replace("event=", "").replace("url=", "").replace("id=", "").replace("time=", "")
-								.replace("pcIp=", "");
+						messageContents = messageContents.replace("data=", "").replace("url=", "")
+								.replace("session=", "").replace("time=", "").replace("pcIp=", "");
 
 						String[] array = messageContents.split("&");
 						try {
-							String user = decode(array[0], "UTF-8");
-							String tarea = decode(array[1], "UTF-8");
-							String event = decode(array[2], "UTF-8");
-							String uri = decode(array[3], "UTF-8");
-							String elem = decode(array[4], "UTF-8");
-							String time = decode(array[5], "UTF-8");
-							String pcIp = decode(array[6], "UTF-8");
 
-							Linea linea = new Linea(user, tarea, elem, uri, event, time, pcIp);
-							SQLiteAccess.insertLinea(linea);
+							String data = decode(array[0], "UTF-8");
+							String uri = decode(array[1], "UTF-8");
+							String time = decode(array[2], "UTF-8");
+							String  session= decode(array[3], "UTF-8");
+							String pcIp = decode(array[4], "UTF-8");
 
+							if (tarea.getUrlFinal().contains(uri)) {
+								Linea linea = new Linea(user, tarea.getKeyTarea(), data, uri, session, time, pcIp);
+								SQLiteAccess.insertLinea(linea);
+							}
 						} catch (UnsupportedEncodingException e) {
 							e.printStackTrace();
 						}
@@ -106,14 +109,15 @@ public class ProxyServer {
 						// lo metemos otra vez
 						contents.setTextContents(newContents);
 						System.out.println("#--> recuperado: " + newContents);
+
 					}
 				}
 			});
 
 			server.start(puerto, direccion);
-			System.out.println("PROXY iniciado:" + direccion.getHostAddress() + ":8080");
+			System.out.println("PROXY iniciado:" + direccion.getHostAddress() + ":" + puerto);
 			server.enableHarCaptureTypes(CaptureType.REQUEST_CONTENT, CaptureType.RESPONSE_CONTENT);
-			setProfileFirefox(puerto, direccion.getHostAddress(), tarea);
+			setProfileFirefox(puerto, direccion.getHostAddress());
 
 		} catch (Exception e) {
 			server.stop();
@@ -121,7 +125,20 @@ public class ProxyServer {
 		}
 	}
 
-	private void setProfileFirefox(int port, String ip, Tarea tarea) {
+	public void close() {
+		String path = new File("").getAbsolutePath();
+		File file = new File(path + "/certs/private-key.pem");
+		if (file.exists())
+			file.delete();
+		file = new File(path + "/certs/keystore.p12");
+		if (file.exists())
+			file.delete();
+		file = new File(path + "/certs/certificate.cer");
+		if (file.exists())
+			file.delete();
+	}
+
+	private void setProfileFirefox(int port, String ip) {
 
 		String path = new File("").getAbsolutePath();
 
@@ -151,11 +168,47 @@ public class ProxyServer {
 				path += ".exe";
 			System.setProperty("webdriver.gecko.driver", path);
 			webDriver = new FirefoxDriver(options);
-			webDriver.get(tarea.getUrlInicio());
 
 		} catch (Exception e) {
 			e.printStackTrace();
 			webDriver.quit();
 		}
 	}
+
+	public void saltoTarea(Tarea tarea) {
+		webDriver.get(tarea.getUrlInicio());
+	}
+
+	public String getUser() {
+		return user;
+	}
+
+	public void setUser(String user) {
+		this.user = user;
+	}
+
+	public Tarea getTarea() {
+		return tarea;
+	}
+
+	public void setTarea(Tarea tarea) {
+		this.tarea = tarea;
+	}
+
+	public BrowserMobProxy getServer() {
+		return server;
+	}
+
+	public void setServer(BrowserMobProxy server) {
+		this.server = server;
+	}
+
+	public WebDriver getWebDriver() {
+		return webDriver;
+	}
+
+	public void setWebDriver(WebDriver webDriver) {
+		this.webDriver = webDriver;
+	}
+
 }

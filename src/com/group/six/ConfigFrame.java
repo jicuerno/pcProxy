@@ -3,6 +3,8 @@ package com.group.six;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.net.InetAddress;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Enumeration;
 
 import javax.swing.AbstractButton;
@@ -11,9 +13,10 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JRadioButton;
+import javax.swing.JSpinner;
 import javax.swing.JTextField;
-
-import org.openqa.selenium.WebDriver;
+import javax.swing.SpinnerDateModel;
+import javax.swing.Timer;
 
 import com.group.six.data.ArchivoXml;
 import com.group.six.data.Datos;
@@ -23,8 +26,6 @@ import com.group.six.proxy.ProxyServer;
 import com.group.six.utils.ReadXMLFile;
 import com.group.six.utils.SQLiteAccess;
 import com.group.six.utils.WebServicesUtils;
-
-import net.lightbody.bmp.BrowserMobProxy;
 
 public class ConfigFrame extends JFrame {
 
@@ -38,16 +39,19 @@ public class ConfigFrame extends JFrame {
 	private JButton btnClose;
 	private final ButtonGroup buttonGroup = new ButtonGroup();
 
-	private BrowserMobProxy proxy;
-	private WebDriver webDriver;
-
 	private Integer port;
 	private InetAddress direccion;
+	private ProxyServer servidor;
+	private Timer timer;
+
+	private int x;
+	private Integer tiempo;
+	private boolean esperar = true;
 
 	public ConfigFrame() {
 		this.setTitle("Formulario Inicial");
 		this.setResizable(false);
-		this.setBounds(100, 100, 450, 300);
+		this.setBounds(100, 100, 650, 400);
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		this.getContentPane().setLayout(null);
 
@@ -109,6 +113,26 @@ public class ConfigFrame extends JFrame {
 		btnClose.setBounds(90, 245, 267, 29);
 		this.getContentPane().add(btnClose);
 
+		timer = new Timer(1000, new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				x += 1000;
+				if (x == tiempo) {
+					((Timer) e.getSource()).stop();
+					esperar= false;
+				}
+			}
+		});
+
+		SpinnerDateModel sm = new SpinnerDateModel(new Date(), null, null, Calendar.SECOND);
+		JSpinner spinner = new JSpinner(sm);
+		JSpinner.DateEditor de = new JSpinner.DateEditor(spinner, "ss");
+		spinner.setBounds(320, 138, 100, 29);
+		spinner.setEditor(de);
+
+		this.getContentPane().add(spinner);
+
 		this.getContentPane();
 
 		btnInit.addActionListener(new ActionListener() {
@@ -155,13 +179,8 @@ public class ConfigFrame extends JFrame {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				if (webDriver != null)
-					webDriver.quit();
-				if (proxy != null && proxy.isStarted())
-					proxy.stop();
 				dispose();
 			}
-
 		});
 
 		btnUpload.addActionListener(new ActionListener() {
@@ -231,13 +250,6 @@ public class ConfigFrame extends JFrame {
 		this.setVisible(true);
 	}
 
-	private void initProxys(Tarea tarea, String idUsuario) throws Exception {
-		ProxyServer servidor = new ProxyServer(port, direccion, idUsuario, tarea);
-		lbMesagge.setText("  Iniciado en :" + direccion.getHostAddress() + " : " + port);
-		proxy = servidor.server;
-		webDriver = servidor.webDriver;
-	}
-
 	private String getSelectedButtonText(ButtonGroup buttonGroup) {
 		for (Enumeration<AbstractButton> buttons = buttonGroup.getElements(); buttons.hasMoreElements();) {
 			AbstractButton button = buttons.nextElement();
@@ -264,21 +276,28 @@ public class ConfigFrame extends JFrame {
 
 		return ((Runnable) new Runnable() {
 			public void run() {
-				for (Tarea tarea : datosXml.getDatos()) {
+				try {
 
-					SQLiteAccess.insertTarea(tarea);
+					servidor = new ProxyServer();
+					servidor.init(port, direccion);
 
-					try {
-						Integer tiempo = Integer.parseInt(tarea.getTiempo()) * 1000;
-						initProxys(tarea, datosXml.getIdUsuario());
-						Thread.sleep(tiempo);
-						if (webDriver != null)
-							webDriver.quit();
-						if (proxy != null)
-							proxy.stop();
-					} catch (Exception ex) {
-						lbMesagge.setText("error:" + ex.getMessage());
+					lbMesagge.setText("  Iniciado en :" + direccion.getHostAddress() + " : " + port);
+
+					for (Tarea tarea : datosXml.getDatos()) {
+						x = 0;
+						tiempo = Integer.parseInt(tarea.getTiempo()) * 1000;
+						SQLiteAccess.insertTarea(tarea);
+
+						servidor.setUser(datosXml.getIdUsuario());
+						servidor.setTarea(tarea);
+						servidor.saltoTarea(tarea);
+						timer.start();
+						while (esperar) { /*nop;*/ }
+						esperar = true;
 					}
+					servidor.close();
+				} catch (Exception ex) {
+					lbMesagge.setText("error:" + ex.getMessage());
 				}
 			}
 		});
