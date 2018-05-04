@@ -3,9 +3,8 @@ package com.group.six;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.net.InetAddress;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.Enumeration;
 
 import javax.swing.AbstractButton;
@@ -15,9 +14,9 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JRadioButton;
-import javax.swing.JSpinner;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
-import javax.swing.SpinnerDateModel;
 import javax.swing.Timer;
 import javax.swing.border.Border;
 
@@ -29,7 +28,6 @@ import com.group.six.proxy.ProxyServer;
 import com.group.six.utils.ReadXMLFile;
 import com.group.six.utils.SQLiteAccess;
 import com.group.six.utils.WebServicesUtils;
-import javax.swing.JTextArea;
 
 public class ConfigFrame extends JFrame {
 
@@ -37,6 +35,7 @@ public class ConfigFrame extends JFrame {
 	private JTextField tfPort;
 	private JTextField tfIp;
 	private JTextField tfEdad;
+	private JTextField spinner;
 	private JTextArea lbMesagge;
 	private JButton btnInit;
 	private JButton btnUpload;
@@ -48,10 +47,10 @@ public class ConfigFrame extends JFrame {
 	private ProxyServer servidor;
 	private Timer timer;
 
-	private int x;
 	private Integer tiempo;
 	private boolean esperar = true;
 
+	
 	public ConfigFrame() {
 		this.setTitle("Formulario Inicial");
 		this.setResizable(false);
@@ -60,11 +59,15 @@ public class ConfigFrame extends JFrame {
 		this.getContentPane().setLayout(null);
 
 		Border border = BorderFactory.createLineBorder(Color.BLACK, 2);
-		
-		lbMesagge =  new JTextArea();
+
+		lbMesagge = new JTextArea();
 		lbMesagge.setBounds(30, 60, 606, 60);
 		lbMesagge.setBorder(border);
-		this.getContentPane().add(lbMesagge);
+		lbMesagge.setEditable(false);
+
+		JScrollPane scroll = new JScrollPane(lbMesagge);
+		scroll.setBounds(30, 60, 606, 60);
+		this.getContentPane().add(scroll);
 
 		JLabel lblEdad = new JLabel("Edad:");
 		lblEdad.setBounds(30, 137, 61, 16);
@@ -123,35 +126,34 @@ public class ConfigFrame extends JFrame {
 		JLabel lblTiempo = new JLabel("Tiempo restante:");
 		lblTiempo.setBounds(319, 213, 149, 16);
 		getContentPane().add(lblTiempo);
-		
+
 		JLabel label = new JLabel("Mensajes:");
 		label.setBounds(30, 31, 100, 16);
 		getContentPane().add(label);
-		
-		
+
 		timer = new Timer(1000, new ActionListener() {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				x += 1000;
-				if (x == tiempo) {
+				tiempo-= 1000;
+				if (tiempo == 0) {
 					((Timer) e.getSource()).stop();
-					esperar= false;
+					esperar = false;
+				}else {
+					Integer res = tiempo/1000;
+					spinner.setText(res.toString());
 				}
 			}
 		});
 
-		SpinnerDateModel sm = new SpinnerDateModel(new Date(), null, null, Calendar.SECOND);
-		JSpinner spinner = new JSpinner(sm);
-		JSpinner.DateEditor de = new JSpinner.DateEditor(spinner, "ss");
+		spinner = new JTextField("0");
 		spinner.setBounds(462, 207, 100, 29);
-		spinner.setEditor(de);
-
 		this.getContentPane().add(spinner);
 
-		this.getContentPane();
 		
-
+		JTextArea textArea = new JTextArea();
+		textArea.setBounds(120, 62, 1, 15);
+		getContentPane().add(textArea);
 
 		btnInit.addActionListener(new ActionListener() {
 			@Override
@@ -197,6 +199,7 @@ public class ConfigFrame extends JFrame {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				close();
 				dispose();
 			}
 		});
@@ -280,6 +283,19 @@ public class ConfigFrame extends JFrame {
 		return null;
 	}
 
+	private void close() {
+		String path = new File("").getAbsolutePath();
+		File file = new File(path + "/certs/private-key.pem");
+		if (file.exists())
+			file.delete();
+		file = new File(path + "/certs/keystore.p12");
+		if (file.exists())
+			file.delete();
+		file = new File(path + "/certs/certificate.cer");
+		if (file.exists())
+			file.delete();
+	}
+
 	private void setTextPort() {
 		tfPort.setText(port.toString());
 		tfPort.setVisible(true);
@@ -288,6 +304,10 @@ public class ConfigFrame extends JFrame {
 	private void setTextIp() {
 		tfIp.setText(direccion.getHostAddress());
 		tfIp.setVisible(true);
+	}
+	
+	private void setTextMessage(String message) {
+		lbMesagge.setText(lbMesagge.getText().toString() + "\n" + message);
 	}
 
 	private Runnable ejecutaProxys(ArchivoXml datosXml) {
@@ -299,18 +319,19 @@ public class ConfigFrame extends JFrame {
 					servidor = new ProxyServer();
 					servidor.init(port, direccion);
 
-					lbMesagge.setText(lbMesagge.getText().toString() + "\\nIniciado en :" + direccion.getHostAddress() + " : " + port);
+					lbMesagge.setText(lbMesagge.getText().toString() + "\nIniciado en :" + direccion.getHostAddress()
+							+ " : " + port);
 
 					for (Tarea tarea : datosXml.getDatos()) {
-						x = 0;
 						tiempo = Integer.parseInt(tarea.getTiempo()) * 1000;
 						SQLiteAccess.insertTarea(tarea);
-
+						setTextMessage(tarea.getInstrucciones());
 						servidor.setUser(datosXml.getIdUsuario());
 						servidor.setTarea(tarea);
 						servidor.saltoTarea(tarea);
 						timer.start();
-						while (esperar) { /*nop;*/ }
+						while (esperar) {
+							/* nop; */ }
 						esperar = true;
 					}
 					servidor.close();
@@ -320,4 +341,5 @@ public class ConfigFrame extends JFrame {
 			}
 		});
 	}
+	
 }
