@@ -1,19 +1,24 @@
 package com.group.six;
 
+import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.net.InetAddress;
 import java.util.Enumeration;
 
 import javax.swing.AbstractButton;
+import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JRadioButton;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
-
-import org.openqa.selenium.WebDriver;
+import javax.swing.Timer;
+import javax.swing.border.Border;
 
 import com.group.six.data.ArchivoXml;
 import com.group.six.data.Datos;
@@ -24,98 +29,137 @@ import com.group.six.utils.ReadXMLFile;
 import com.group.six.utils.SQLiteAccess;
 import com.group.six.utils.WebServicesUtils;
 
-import net.lightbody.bmp.BrowserMobProxy;
-
 public class ConfigFrame extends JFrame {
 
 	private static final long serialVersionUID = -7147860617586130063L;
 	private JTextField tfPort;
 	private JTextField tfIp;
 	private JTextField tfEdad;
-	private JLabel lbMesagge;
+	private JTextField spinner;
+	private JTextArea lbMesagge;
 	private JButton btnInit;
 	private JButton btnUpload;
 	private JButton btnClose;
 	private final ButtonGroup buttonGroup = new ButtonGroup();
 
-	private BrowserMobProxy proxy;
-	private WebDriver webDriver;
-
 	private Integer port;
 	private InetAddress direccion;
+	private ProxyServer servidor;
+	private Timer timer;
 
+	private Integer tiempo;
+	private boolean esperar = true;
+
+	
 	public ConfigFrame() {
 		this.setTitle("Formulario Inicial");
 		this.setResizable(false);
-		this.setBounds(100, 100, 450, 300);
+		this.setBounds(100, 100, 650, 400);
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		this.getContentPane().setLayout(null);
 
-		lbMesagge = new JLabel(" ");
-		lbMesagge.setBounds(20, 20, 300, 16);
-		this.getContentPane().add(lbMesagge);
+		Border border = BorderFactory.createLineBorder(Color.BLACK, 2);
+
+		lbMesagge = new JTextArea();
+		lbMesagge.setBounds(30, 60, 606, 60);
+		lbMesagge.setBorder(border);
+		lbMesagge.setEditable(false);
+
+		JScrollPane scroll = new JScrollPane(lbMesagge);
+		scroll.setBounds(30, 60, 606, 60);
+		this.getContentPane().add(scroll);
 
 		JLabel lblEdad = new JLabel("Edad:");
-		lblEdad.setBounds(45, 50, 61, 16);
+		lblEdad.setBounds(30, 137, 61, 16);
 		this.getContentPane().add(lblEdad);
 
 		JLabel lblSexo = new JLabel("Sexo:");
-		lblSexo.setBounds(245, 50, 61, 16);
+		lblSexo.setBounds(366, 137, 61, 16);
 		this.getContentPane().add(lblSexo);
 
 		JLabel lblPuerto = new JLabel("Puerto:");
-		lblPuerto.setBounds(45, 90, 61, 16);
+		lblPuerto.setBounds(30, 175, 61, 16);
 		this.getContentPane().add(lblPuerto);
 
 		JLabel lblIp = new JLabel("Servidor Ip:");
-		lblIp.setBounds(45, 140, 91, 16);
+		lblIp.setBounds(30, 213, 91, 16);
 		this.getContentPane().add(lblIp);
 
 		tfEdad = new JTextField();
-		tfEdad.setBounds(128, 48, 78, 26);
+		tfEdad.setBounds(123, 133, 78, 26);
 		this.getContentPane().add(tfEdad);
 		tfEdad.setColumns(10);
 
 		tfPort = new JTextField();
-		tfPort.setBounds(128, 88, 78, 26);
+		tfPort.setBounds(123, 171, 78, 26);
 		this.getContentPane().add(tfPort);
 		tfPort.setColumns(5);
 
 		tfIp = new JTextField();
-		tfIp.setBounds(128, 138, 178, 26);
+		tfIp.setBounds(123, 209, 178, 26);
 		this.getContentPane().add(tfIp);
 		tfIp.setColumns(15);
 
 		JRadioButton rdbtnMasculino = new JRadioButton("Masculino");
 		rdbtnMasculino.setSelected(true);
 		buttonGroup.add(rdbtnMasculino);
-		rdbtnMasculino.setBounds(300, 50, 141, 23);
+		rdbtnMasculino.setBounds(421, 137, 141, 23);
 		this.getContentPane().add(rdbtnMasculino);
 
 		JRadioButton rdbtnFemenino = new JRadioButton("Femenino");
 		buttonGroup.add(rdbtnFemenino);
-		rdbtnFemenino.setBounds(300, 80, 141, 23);
+		rdbtnFemenino.setBounds(421, 168, 141, 23);
 		this.getContentPane().add(rdbtnFemenino);
 
 		btnInit = new JButton("Iniciar");
-		btnInit.setBounds(90, 205, 117, 29);
+		btnInit.setBounds(192, 277, 117, 29);
 		this.getContentPane().add(btnInit);
 
 		btnUpload = new JButton("Enviar");
-		btnUpload.setBounds(240, 205, 117, 29);
+		btnUpload.setBounds(342, 277, 117, 29);
 		this.getContentPane().add(btnUpload);
 
 		btnClose = new JButton("Cerrar");
-		btnClose.setBounds(90, 245, 267, 29);
+		btnClose.setBounds(192, 335, 267, 29);
 		this.getContentPane().add(btnClose);
 
-		this.getContentPane();
+		JLabel lblTiempo = new JLabel("Tiempo restante:");
+		lblTiempo.setBounds(319, 213, 149, 16);
+		getContentPane().add(lblTiempo);
+
+		JLabel label = new JLabel("Mensajes:");
+		label.setBounds(30, 31, 100, 16);
+		getContentPane().add(label);
+
+		timer = new Timer(1000, new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				tiempo-= 1000;
+				if (tiempo == 0) {
+					((Timer) e.getSource()).stop();
+					esperar = false;
+				}else {
+					Integer res = tiempo/1000;
+					spinner.setText(res.toString());
+				}
+			}
+		});
+
+		spinner = new JTextField("0");
+		spinner.setBounds(462, 207, 100, 29);
+		this.getContentPane().add(spinner);
+
+		
+		JTextArea textArea = new JTextArea();
+		textArea.setBounds(120, 62, 1, 15);
+		getContentPane().add(textArea);
 
 		btnInit.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				if (tfEdad.getText().equals("")) {
-					lbMesagge.setText("error: introduce una Edad valida");
+					lbMesagge.setText(lbMesagge.getText().toString() + "\nerror: introduce una Edad valida");
 				} else {
 					InitProxy();
 				}
@@ -138,7 +182,7 @@ public class ConfigFrame extends JFrame {
 						setTextIp();
 					}
 				} catch (Exception e1) {
-					lbMesagge.setText("error:" + e1.getMessage());
+					lbMesagge.setText(lbMesagge.getText().toString() + "\nerror:" + e1.getMessage());
 				}
 
 				ArchivoXml datosXml = new ReadXMLFile().getDatosXml();
@@ -155,13 +199,9 @@ public class ConfigFrame extends JFrame {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				if (webDriver != null)
-					webDriver.quit();
-				if (proxy != null && proxy.isStarted())
-					proxy.stop();
+				close();
 				dispose();
 			}
-
 		});
 
 		btnUpload.addActionListener(new ActionListener() {
@@ -216,12 +256,12 @@ public class ConfigFrame extends JFrame {
 					if ("isOk".equals(isOk)) {
 						SQLiteAccess.borrarLineas();
 						System.out.println("Todo Ok");
-						lbMesagge.setText("Resulado del envío: Ok");
+						lbMesagge.setText(lbMesagge.getText().toString() + "\nResulado del envío: Ok");
 					}
 				} catch (Exception e1) {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
-					lbMesagge.setText("Error: " + e1.getMessage());
+					lbMesagge.setText(lbMesagge.getText().toString() + "\nError: " + e1.getMessage());
 				}
 				btnClose.setEnabled(true);
 				btnInit.setEnabled(true);
@@ -229,13 +269,6 @@ public class ConfigFrame extends JFrame {
 		});
 
 		this.setVisible(true);
-	}
-
-	private void initProxys(Tarea tarea, String idUsuario) throws Exception {
-		ProxyServer servidor = new ProxyServer(port, direccion, idUsuario, tarea);
-		lbMesagge.setText("  Iniciado en :" + direccion.getHostAddress() + " : " + port);
-		proxy = servidor.server;
-		webDriver = servidor.webDriver;
 	}
 
 	private String getSelectedButtonText(ButtonGroup buttonGroup) {
@@ -250,6 +283,19 @@ public class ConfigFrame extends JFrame {
 		return null;
 	}
 
+	private void close() {
+		String path = new File("").getAbsolutePath();
+		File file = new File(path + "/certs/private-key.pem");
+		if (file.exists())
+			file.delete();
+		file = new File(path + "/certs/keystore.p12");
+		if (file.exists())
+			file.delete();
+		file = new File(path + "/certs/certificate.cer");
+		if (file.exists())
+			file.delete();
+	}
+
 	private void setTextPort() {
 		tfPort.setText(port.toString());
 		tfPort.setVisible(true);
@@ -259,29 +305,41 @@ public class ConfigFrame extends JFrame {
 		tfIp.setText(direccion.getHostAddress());
 		tfIp.setVisible(true);
 	}
+	
+	private void setTextMessage(String message) {
+		lbMesagge.setText(lbMesagge.getText().toString() + "\n" + message);
+	}
 
 	private Runnable ejecutaProxys(ArchivoXml datosXml) {
 
 		return ((Runnable) new Runnable() {
 			public void run() {
-				for (Tarea tarea : datosXml.getDatos()) {
+				try {
 
-					SQLiteAccess.insertTarea(tarea);
+					servidor = new ProxyServer();
+					servidor.init(port, direccion);
 
-					try {
-						Integer tiempo = Integer.parseInt(tarea.getTiempo()) * 1000;
-						initProxys(tarea, datosXml.getIdUsuario());
-						Thread.sleep(tiempo);
-						if (webDriver != null)
-							webDriver.quit();
-						if (proxy != null)
-							proxy.stop();
-					} catch (Exception ex) {
-						lbMesagge.setText("error:" + ex.getMessage());
+					lbMesagge.setText(lbMesagge.getText().toString() + "\nIniciado en :" + direccion.getHostAddress()
+							+ " : " + port);
+
+					for (Tarea tarea : datosXml.getDatos()) {
+						tiempo = Integer.parseInt(tarea.getTiempo()) * 1000;
+						SQLiteAccess.insertTarea(tarea);
+						setTextMessage(tarea.getInstrucciones());
+						servidor.setUser(datosXml.getIdUsuario());
+						servidor.setTarea(tarea);
+						servidor.saltoTarea(tarea);
+						timer.start();
+						while (esperar) {
+							/* nop; */ }
+						esperar = true;
 					}
+					servidor.close();
+				} catch (Exception ex) {
+					lbMesagge.setText(lbMesagge.getText().toString() + "\nerror:" + ex.getMessage());
 				}
 			}
 		});
 	}
-
+	
 }
