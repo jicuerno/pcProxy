@@ -20,6 +20,8 @@ import javax.swing.JTextField;
 import javax.swing.Timer;
 import javax.swing.border.Border;
 
+import org.apache.log4j.Logger;
+
 import com.group.six.data.ArchivoXml;
 import com.group.six.data.Datos;
 import com.group.six.data.Tarea;
@@ -31,11 +33,13 @@ import com.group.six.utils.WebServicesUtils;
 
 public class ConfigFrame extends JFrame {
 
+	private static Logger logger = Logger.getLogger(ConfigFrame.class);
 	private static final long serialVersionUID = -7147860617586130063L;
 	private JTextField tfPort;
 	private JTextField tfIp;
 	private JTextField tfEdad;
 	private JTextField spinner;
+	private JTextField ipSender;
 	private JTextArea lbMesagge;
 	private JButton btnInit;
 	private JButton btnUpload;
@@ -50,11 +54,12 @@ public class ConfigFrame extends JFrame {
 	private Integer tiempo;
 	private boolean esperar = true;
 
-	
+	private String path;
+
 	public ConfigFrame() {
 		this.setTitle("Formulario Inicial");
 		this.setResizable(false);
-		this.setBounds(100, 100, 650, 400);
+		this.setBounds(100, 100, 650, 450);
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		this.getContentPane().setLayout(null);
 
@@ -82,7 +87,7 @@ public class ConfigFrame extends JFrame {
 		this.getContentPane().add(lblPuerto);
 
 		JLabel lblIp = new JLabel("Servidor Ip:");
-		lblIp.setBounds(30, 213, 91, 16);
+		lblIp.setBounds(30, 214, 91, 16);
 		this.getContentPane().add(lblIp);
 
 		tfEdad = new JTextField();
@@ -112,15 +117,15 @@ public class ConfigFrame extends JFrame {
 		this.getContentPane().add(rdbtnFemenino);
 
 		btnInit = new JButton("Iniciar");
-		btnInit.setBounds(192, 277, 117, 29);
+		btnInit.setBounds(30, 277, 117, 29);
 		this.getContentPane().add(btnInit);
 
 		btnUpload = new JButton("Enviar");
-		btnUpload.setBounds(342, 277, 117, 29);
+		btnUpload.setBounds(30, 330, 117, 29);
 		this.getContentPane().add(btnUpload);
 
 		btnClose = new JButton("Cerrar");
-		btnClose.setBounds(192, 335, 267, 29);
+		btnClose.setBounds(159, 277, 267, 29);
 		this.getContentPane().add(btnClose);
 
 		JLabel lblTiempo = new JLabel("Tiempo restante:");
@@ -135,12 +140,13 @@ public class ConfigFrame extends JFrame {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				tiempo-= 1000;
-				if (tiempo == 0) {
+				tiempo -= 1000;
+				if (tiempo <= 0) {
 					((Timer) e.getSource()).stop();
+					spinner.setText("0");
 					esperar = false;
-				}else {
-					Integer res = tiempo/1000;
+				} else {
+					Integer res = tiempo / 1000;
 					spinner.setText(res.toString());
 				}
 			}
@@ -150,10 +156,18 @@ public class ConfigFrame extends JFrame {
 		spinner.setBounds(462, 207, 100, 29);
 		this.getContentPane().add(spinner);
 
-		
 		JTextArea textArea = new JTextArea();
 		textArea.setBounds(120, 62, 1, 15);
 		getContentPane().add(textArea);
+
+		ipSender = new JTextField();
+		ipSender.setColumns(15);
+		ipSender.setBounds(249, 331, 178, 26);
+		getContentPane().add(ipSender);
+
+		JLabel lblIpDelWs = new JLabel("Ip del WS:");
+		lblIpDelWs.setBounds(176, 336, 61, 16);
+		getContentPane().add(lblIpDelWs);
 
 		btnInit.addActionListener(new ActionListener() {
 			@Override
@@ -183,11 +197,11 @@ public class ConfigFrame extends JFrame {
 					}
 				} catch (Exception e1) {
 					lbMesagge.setText(lbMesagge.getText().toString() + "\nerror:" + e1.getMessage());
+					logger.error(e1.getMessage());
 				}
 
 				ArchivoXml datosXml = new ReadXMLFile().getDatosXml();
-				Usuario user = new Usuario(datosXml.getIdUsuario(), Integer.parseInt(tfEdad.getText()),
-						getSelectedButtonText(buttonGroup));
+				Usuario user = new Usuario(datosXml.getIdUsuario(), Integer.parseInt(tfEdad.getText()), getSelectedButtonText(buttonGroup));
 
 				SQLiteAccess.insertUsuario(user);
 				new Thread(ejecutaProxys(datosXml)).start();
@@ -210,7 +224,7 @@ public class ConfigFrame extends JFrame {
 			public void actionPerformed(ActionEvent e) {
 				btnClose.setEnabled(false);
 				btnInit.setEnabled(false);
-				WebServicesUtils ws = new WebServicesUtils();
+				WebServicesUtils ws = new WebServicesUtils(ipSender.getText().toString());
 				String isOk = "";
 
 				try {
@@ -236,6 +250,7 @@ public class ConfigFrame extends JFrame {
 							isOk = ws.invocaWebServiceHttp(datos, "tareas");
 						} catch (Exception ex) {
 							isOk = "";
+							logger.error(ex.getMessage());
 						}
 					}
 
@@ -250,6 +265,7 @@ public class ConfigFrame extends JFrame {
 							isOk = ws.invocaWebServiceHttp(datos, "lineas");
 						} catch (Exception ex) {
 							isOk = "";
+							logger.error(ex.getMessage());
 						}
 					}
 
@@ -260,7 +276,7 @@ public class ConfigFrame extends JFrame {
 					}
 				} catch (Exception e1) {
 					// TODO Auto-generated catch block
-					e1.printStackTrace();
+					logger.error(e1.getMessage());
 					lbMesagge.setText(lbMesagge.getText().toString() + "\nError: " + e1.getMessage());
 				}
 				btnClose.setEnabled(true);
@@ -305,9 +321,17 @@ public class ConfigFrame extends JFrame {
 		tfIp.setText(direccion.getHostAddress());
 		tfIp.setVisible(true);
 	}
-	
+
 	private void setTextMessage(String message) {
 		lbMesagge.setText(lbMesagge.getText().toString() + "\n" + message);
+	}
+
+	public String getPath() {
+		return path;
+	}
+
+	public void setPath(String path) {
+		this.path = path;
 	}
 
 	private Runnable ejecutaProxys(ArchivoXml datosXml) {
@@ -317,10 +341,10 @@ public class ConfigFrame extends JFrame {
 				try {
 
 					servidor = new ProxyServer();
+					servidor.setPath(path);
 					servidor.init(port, direccion);
 
-					lbMesagge.setText(lbMesagge.getText().toString() + "\nIniciado en :" + direccion.getHostAddress()
-							+ " : " + port);
+					lbMesagge.setText(lbMesagge.getText().toString() + "\nIniciado en :" + direccion.getHostAddress() + " : " + port);
 
 					for (Tarea tarea : datosXml.getDatos()) {
 						tiempo = Integer.parseInt(tarea.getTiempo()) * 1000;
@@ -329,17 +353,19 @@ public class ConfigFrame extends JFrame {
 						servidor.setUser(datosXml.getIdUsuario());
 						servidor.setTarea(tarea);
 						servidor.saltoTarea(tarea);
+						servidor.setFin(false);
 						timer.start();
-						while (esperar) {
+						while (esperar || servidor.isFin()) {
 							/* nop; */ }
 						esperar = true;
+						timer.stop();
 					}
 					servidor.close();
 				} catch (Exception ex) {
+					logger.error(ex.getMessage());
 					lbMesagge.setText(lbMesagge.getText().toString() + "\nerror:" + ex.getMessage());
 				}
 			}
 		});
 	}
-	
 }

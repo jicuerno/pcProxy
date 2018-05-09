@@ -38,6 +38,9 @@ public class ProxyServer {
 	private String script;
 	private String user;
 	private Tarea tarea;
+	private String path;
+
+	private boolean fin;
 
 	public ProxyServer() {
 
@@ -45,13 +48,13 @@ public class ProxyServer {
 
 	public void init(Integer puerto, InetAddress direccion) throws Exception {
 
-		String path = new File("").getAbsolutePath();
+		fin = false;
+
 		RootCertificateGenerator rootCG = RootCertificateGenerator.builder().build();
 
 		rootCG.saveRootCertificateAsPemFile(new File(path + "/certs/certificate.cer"));
 		rootCG.savePrivateKeyAsPemFile(new File(path + "/certs/private-key.pem"), "password");
-		rootCG.saveRootCertificateAndKey("PKCS12", new File(path + "/certs/keystore.p12"), "privateKeyAlias",
-				"password");
+		rootCG.saveRootCertificateAndKey("PKCS12", new File(path + "/certs/keystore.p12"), "privateKeyAlias", "password");
 		ImpersonatingMitmManager mitmManager = ImpersonatingMitmManager.builder().rootCertificateSource(rootCG).build();
 
 		server = new BrowserMobProxyServer();
@@ -64,14 +67,12 @@ public class ProxyServer {
 			server.addRequestFilter(new RequestFilter() {
 
 				@Override
-				public HttpResponse filterRequest(HttpRequest request, HttpMessageContents contents,
-						HttpMessageInfo messageInfo) {
+				public HttpResponse filterRequest(HttpRequest request, HttpMessageContents contents, HttpMessageInfo messageInfo) {
 					String url = messageInfo.getOriginalUrl().toLowerCase();
 					if (url.contains("www.myservice.com")) {
 						String messageContents = contents.getTextContents();
 
-						messageContents = messageContents.replace("data=", "").replace("url=", "")
-								.replace("session=", "").replace("time=", "").replace("pcIp=", "");
+						messageContents = messageContents.replace("data=", "").replace("url=", "").replace("session=", "").replace("time=", "").replace("pcIp=", "");
 
 						String[] array = messageContents.split("&");
 						try {
@@ -79,12 +80,14 @@ public class ProxyServer {
 							String data = decode(array[0], "UTF-8");
 							String uri = decode(array[1], "UTF-8");
 							String time = decode(array[2], "UTF-8");
-							String  session= decode(array[3], "UTF-8");
+							String session = decode(array[3], "UTF-8");
 							String pcIp = decode(array[4], "UTF-8");
 
+							Linea linea = new Linea(user, tarea.getKeyTarea(), data, uri, session, time, pcIp);
+							SQLiteAccess.insertLinea(linea);
+
 							if (tarea.getUrlFinal().contains(uri)) {
-								Linea linea = new Linea(user, tarea.getKeyTarea(), data, uri, session, time, pcIp);
-								SQLiteAccess.insertLinea(linea);
+								fin = true;
 							}
 						} catch (UnsupportedEncodingException e) {
 							e.printStackTrace();
@@ -97,8 +100,7 @@ public class ProxyServer {
 			server.addResponseFilter(new ResponseFilter() {
 
 				@Override
-				public void filterResponse(HttpResponse response, HttpMessageContents contents,
-						HttpMessageInfo messageInfo) {
+				public void filterResponse(HttpResponse response, HttpMessageContents contents, HttpMessageInfo messageInfo) {
 					String messageContents = contents.getTextContents();
 
 					if (messageContents.contains("</HEAD>") || messageContents.contains("</head>")) {
@@ -126,7 +128,6 @@ public class ProxyServer {
 	}
 
 	public void close() {
-		String path = new File("").getAbsolutePath();
 		File file = new File(path + "/certs/private-key.pem");
 		if (file.exists())
 			file.delete();
@@ -139,8 +140,6 @@ public class ProxyServer {
 	}
 
 	private void setProfileFirefox(int port, String ip) {
-
-		String path = new File("").getAbsolutePath();
 
 		webDriver = null;
 
@@ -209,6 +208,18 @@ public class ProxyServer {
 
 	public void setWebDriver(WebDriver webDriver) {
 		this.webDriver = webDriver;
+	}
+
+	public boolean isFin() {
+		return fin;
+	}
+
+	public void setFin(boolean fin) {
+		this.fin = fin;
+	}
+
+	public void setPath(String path) {
+		this.path = path;
 	}
 
 }

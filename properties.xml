@@ -6,14 +6,14 @@
 		<instrucciones>Logeate en eGela (no recogemos datos) (No cierres el navegador)</instrucciones>
 		<urlInicio>https://egela1718.ehu.eus/</urlInicio>
 		<urlFinal>https://egela1718.ehu.eus/</urlFinal>
-		<tiempo>200</tiempo>
+		<tiempo>20</tiempo>
 	</Tarea>
 	<Tarea>
 		<idTarea>tarea1</idTarea>
 		<instrucciones>Localiza la página de inicio del departamento del profesor de la asignatura (Lenguajes y Sistemas Informáticos)</instrucciones>
 		<urlInicio>https://egela1718.ehu.eus/</urlInicio>
 		<urlFinal>https://egela1718.ehu.eus/course/view.php?id=3514</urlFinal>
-		<tiempo>200</tiempo>
+		<tiempo>20</tiempo>
 	</Tarea>
 	<Tarea>
 		<idTarea>tarea2</idTarea>

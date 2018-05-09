@@ -15,6 +15,12 @@ public class WebServicesUtils {
 	private static Integer sincro = 1800;
 	private static String urlWebServiceRest = "http://localhost:8080/WebService/enviar/";
 
+	public WebServicesUtils(String url) {
+		super();
+		if (url != null && url.equals(""))
+			urlWebServiceRest.replace("localhost", url);
+	}
+
 	public String invocaWebServiceHttp(final Datos datos, String action) throws Exception {
 		String result = "";
 		String urlToInvocate = urlWebServiceRest + action;
@@ -24,7 +30,7 @@ public class WebServicesUtils {
 		final URL url = new URL(urlToInvocate);
 		final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 		connection.setConnectTimeout(sincro * 1000);
-		connection.setReadTimeout(sincro * 1000);		
+		connection.setReadTimeout(sincro * 1000);
 		connection.setRequestMethod("POST");
 		connection.setDoOutput(true);
 		connection.setRequestProperty("Content-Type", "application/json");
