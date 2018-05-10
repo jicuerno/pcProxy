@@ -22,7 +22,7 @@ public class Scripts {
 		FileReader f;
 		StringBuilder builder = new StringBuilder();
 		try {
-			f = new FileReader(new File("").getAbsolutePath() + "/src/com/group/six/js/" + name + ".js");
+			f = new FileReader(new File("").getAbsolutePath() + "/src/main/java/com/group/six/js/" + name + ".js");
 			BufferedReader b = new BufferedReader(f);
 			while ((cadena = b.readLine()) != null) {
 				builder.append(cadena + "\n");

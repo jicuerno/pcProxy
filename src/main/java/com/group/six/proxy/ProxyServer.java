@@ -86,8 +86,8 @@ public class ProxyServer {
 							Linea linea = new Linea(user, tarea.getKeyTarea(), data, uri, session, time, pcIp);
 							SQLiteAccess.insertLinea(linea);
 
-							if (tarea.getUrlFinal().contains(uri)) {
-								fin = true;
+							if (tarea.getUrlFinal().equals(uri) || uri.contains(tarea.getUrlFinal())) {
+								setFin(true);
 							}
 						} catch (UnsupportedEncodingException e) {
 							e.printStackTrace();

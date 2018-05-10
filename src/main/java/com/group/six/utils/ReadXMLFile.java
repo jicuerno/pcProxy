@@ -16,10 +16,10 @@ public class ReadXMLFile {
 
 	private ArchivoXml datosXml;
 
-	public ReadXMLFile() {
+	public ReadXMLFile(String path) {
 		try {
 			datosXml = new ArchivoXml();
-			File fXmlFile = new File("properties.xml");
+			File fXmlFile = new File(path + "/properties/properties.xml");
 
 			if (fXmlFile != null) {
 				DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();

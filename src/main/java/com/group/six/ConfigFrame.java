@@ -52,9 +52,12 @@ public class ConfigFrame extends JFrame {
 	private Timer timer;
 
 	private Integer tiempo;
-	private boolean esperar = true;
 
 	private String path;
+
+	private Integer cont;
+
+	private ArchivoXml datosXml;
 
 	public ConfigFrame() {
 		this.setTitle("Formulario Inicial");
@@ -136,22 +139,6 @@ public class ConfigFrame extends JFrame {
 		label.setBounds(30, 31, 100, 16);
 		getContentPane().add(label);
 
-		timer = new Timer(1000, new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				tiempo -= 1000;
-				if (tiempo <= 0) {
-					((Timer) e.getSource()).stop();
-					spinner.setText("0");
-					esperar = false;
-				} else {
-					Integer res = tiempo / 1000;
-					spinner.setText(res.toString());
-				}
-			}
-		});
-
 		spinner = new JTextField("0");
 		spinner.setBounds(462, 207, 100, 29);
 		this.getContentPane().add(spinner);
@@ -200,11 +187,11 @@ public class ConfigFrame extends JFrame {
 					logger.error(e1.getMessage());
 				}
 
-				ArchivoXml datosXml = new ReadXMLFile().getDatosXml();
+				datosXml = new ReadXMLFile(path).getDatosXml();
 				Usuario user = new Usuario(datosXml.getIdUsuario(), Integer.parseInt(tfEdad.getText()), getSelectedButtonText(buttonGroup));
 
 				SQLiteAccess.insertUsuario(user);
-				new Thread(ejecutaProxys(datosXml)).start();
+				new Thread(ejecutaProxys()).start();
 				btnUpload.setEnabled(true);
 			}
 		});
@@ -287,6 +274,24 @@ public class ConfigFrame extends JFrame {
 		this.setVisible(true);
 	}
 
+	private Timer initTimer() {
+		return new Timer(1000, new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				tiempo -= 1000;
+				if (tiempo <= 0 || servidor.isFin()) {
+					((Timer) e.getSource()).stop();
+					spinner.setText("0");
+					setTareaInProxy();
+				} else {
+					Integer res = tiempo / 1000;
+					spinner.setText(res.toString());
+				}
+			}
+		});
+	}
+
 	private String getSelectedButtonText(ButtonGroup buttonGroup) {
 		for (Enumeration<AbstractButton> buttons = buttonGroup.getElements(); buttons.hasMoreElements();) {
 			AbstractButton button = buttons.nextElement();
@@ -334,38 +339,39 @@ public class ConfigFrame extends JFrame {
 		this.path = path;
 	}
 
-	private Runnable ejecutaProxys(ArchivoXml datosXml) {
+	private Runnable ejecutaProxys() {
 
 		return ((Runnable) new Runnable() {
 			public void run() {
 				try {
-
+					cont = 0;
 					servidor = new ProxyServer();
 					servidor.setPath(path);
 					servidor.init(port, direccion);
-
 					lbMesagge.setText(lbMesagge.getText().toString() + "\nIniciado en :" + direccion.getHostAddress() + " : " + port);
-
-					for (Tarea tarea : datosXml.getDatos()) {
-						tiempo = Integer.parseInt(tarea.getTiempo()) * 1000;
-						SQLiteAccess.insertTarea(tarea);
-						setTextMessage(tarea.getInstrucciones());
-						servidor.setUser(datosXml.getIdUsuario());
-						servidor.setTarea(tarea);
-						servidor.saltoTarea(tarea);
-						servidor.setFin(false);
-						timer.start();
-						while (esperar || servidor.isFin()) {
-							/* nop; */ }
-						esperar = true;
-						timer.stop();
-					}
-					servidor.close();
+					setTareaInProxy();
 				} catch (Exception ex) {
 					logger.error(ex.getMessage());
 					lbMesagge.setText(lbMesagge.getText().toString() + "\nerror:" + ex.getMessage());
 				}
 			}
 		});
+	}
+
+	private void setTareaInProxy() {
+		if (cont < datosXml.getDatos().size()) {
+			Tarea tarea = datosXml.getDatos().get(cont++);
+			tiempo = Integer.parseInt(tarea.getTiempo()) * 1000;
+			timer = initTimer();
+			SQLiteAccess.insertTarea(tarea);
+			setTextMessage(tarea.getInstrucciones());
+			servidor.setUser(datosXml.getIdUsuario());
+			servidor.setTarea(tarea);
+			servidor.saltoTarea(tarea);
+			servidor.setFin(false);
+			timer.start();
+		} else {
+			servidor.close();
+		}
 	}
 }

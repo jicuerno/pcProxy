@@ -24,7 +24,11 @@ public class Main {
 			File folderDriver = new File(path + "/driver");
 			if (!folderDriver.exists())
 				folderDB.mkdir();
-
+			
+			File folderProper = new File(path + "/properties");
+			if (!folderProper.exists())
+				folderProper.mkdir();
+			
 			SQLiteAccess.createTables();
 
 			final ConfigFrame frame = new ConfigFrame();

@@ -6,7 +6,7 @@
 		<instrucciones>Logeate en eGela (no recogemos datos) (No cierres el navegador)</instrucciones>
 		<urlInicio>https://egela1718.ehu.eus/</urlInicio>
 		<urlFinal>https://egela1718.ehu.eus/</urlFinal>
-		<tiempo>20</tiempo>
+		<tiempo>60</tiempo>
 	</Tarea>
 	<Tarea>
 		<idTarea>tarea1</idTarea>
