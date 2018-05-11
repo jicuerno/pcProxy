@@ -165,6 +165,9 @@ public class ProxyServer {
 			path += "/driver/geckodriver";
 			if (SystemUtils.IS_OS_WINDOWS)
 				path += ".exe";
+			else if (SystemUtils.IS_OS_MAC_OSX)
+				path += "Mac";
+				
 			System.setProperty("webdriver.gecko.driver", path);
 			webDriver = new FirefoxDriver(options);
 
