@@ -328,7 +328,7 @@ public class ConfigFrame extends JFrame {
 	}
 
 	private void setTextMessage(String message) {
-		lbMesagge.setText(lbMesagge.getText().toString() + "\n" + message);
+		lbMesagge.setText(message);
 	}
 
 	public String getPath() {
@@ -375,3 +375,4 @@ public class ConfigFrame extends JFrame {
 		}
 	}
 }
+ 

@@ -11,8 +11,11 @@ import com.group.six.utils.SQLiteAccess;
 
 public class Main {
 
+	static ConfigFrame frame;
+
 	public static void main(String[] args) {
 		Logger logger = Logger.getLogger(Main.class);
+
 		try {
 			String path = new File("").getCanonicalPath();
 			File folderDB = new File(path + "/db");
@@ -24,14 +27,14 @@ public class Main {
 			File folderDriver = new File(path + "/driver");
 			if (!folderDriver.exists())
 				folderDB.mkdir();
-			
+
 			File folderProper = new File(path + "/properties");
 			if (!folderProper.exists())
 				folderProper.mkdir();
-			
+
 			SQLiteAccess.createTables();
 
-			final ConfigFrame frame = new ConfigFrame();
+			frame = new ConfigFrame();
 			frame.setPath(path);
 			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 			frame.setVisible(true);
@@ -39,5 +42,10 @@ public class Main {
 		} catch (IOException e) {
 			logger.error(e.getMessage());
 		}
+	}
+	
+	public static void toFront() {
+		frame.toFront();
+		frame.repaint();
 	}
 }
