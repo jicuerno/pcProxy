@@ -137,6 +137,8 @@ public class ProxyServer {
 		file = new File(path + "/certs/certificate.cer");
 		if (file.exists())
 			file.delete();
+		webDriver.quit();
+		server.stop();
 	}
 
 	private void setProfileFirefox(int port, String ip) {

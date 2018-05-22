@@ -315,6 +315,7 @@ public class ConfigFrame extends JFrame {
 		file = new File(path + "/certs/certificate.cer");
 		if (file.exists())
 			file.delete();
+		servidor.close();
 	}
 
 	private void setTextPort() {
@@ -339,6 +340,11 @@ public class ConfigFrame extends JFrame {
 		this.path = path;
 	}
 
+	public ProxyServer getServidor() {
+		return servidor;
+	}
+
+		
 	private Runnable ejecutaProxys() {
 
 		return ((Runnable) new Runnable() {
@@ -374,5 +380,9 @@ public class ConfigFrame extends JFrame {
 			servidor.close();
 		}
 	}
+
+	public void closeServidor() {
+		servidor.close();
+	}
+
 }
- 

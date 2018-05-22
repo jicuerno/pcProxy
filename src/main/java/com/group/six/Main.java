@@ -39,11 +39,19 @@ public class Main {
 			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 			frame.setVisible(true);
 			frame.setLocation(320, 320);
+			frame.addWindowListener(new java.awt.event.WindowAdapter() {
+				@Override
+				public void windowClosing(java.awt.event.WindowEvent windowEvent) {
+					frame.getServidor().close();
+				}
+			});
+
 		} catch (IOException e) {
 			logger.error(e.getMessage());
+			frame.getServidor().close();
 		}
 	}
-	
+
 	public static void toFront() {
 		frame.toFront();
 		frame.repaint();
