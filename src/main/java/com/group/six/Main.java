@@ -43,12 +43,15 @@ public class Main {
 				@Override
 				public void windowClosing(java.awt.event.WindowEvent windowEvent) {
 					frame.getServidor().close();
+					frame.forceClose();
+	
 				}
 			});
 
 		} catch (IOException e) {
 			logger.error(e.getMessage());
 			frame.getServidor().close();
+			frame.forceClose();
 		}
 	}
 

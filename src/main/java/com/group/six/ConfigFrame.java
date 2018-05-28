@@ -59,7 +59,10 @@ public class ConfigFrame extends JFrame {
 
 	private ArchivoXml datosXml;
 
+	private Integer tareas;
+
 	public ConfigFrame() {
+		tareas = 0;
 		this.setTitle("Formulario Inicial");
 		this.setResizable(false);
 		this.setBounds(100, 100, 650, 450);
@@ -259,7 +262,7 @@ public class ConfigFrame extends JFrame {
 					if ("isOk".equals(isOk)) {
 						SQLiteAccess.borrarLineas();
 						System.out.println("Todo Ok");
-						lbMesagge.setText(lbMesagge.getText().toString() + "\nResulado del envío: Ok");
+						lbMesagge.setText(lbMesagge.getText().toString() + "\nResulado del envio: Ok");
 					}
 				} catch (Exception e1) {
 					// TODO Auto-generated catch block
@@ -318,6 +321,11 @@ public class ConfigFrame extends JFrame {
 		servidor.close();
 	}
 
+	void forceClose() {
+		 setVisible(false);
+		 dispose();
+	}
+	
 	private void setTextPort() {
 		tfPort.setText(port.toString());
 		tfPort.setVisible(true);
@@ -344,7 +352,6 @@ public class ConfigFrame extends JFrame {
 		return servidor;
 	}
 
-		
 	private Runnable ejecutaProxys() {
 
 		return ((Runnable) new Runnable() {
@@ -370,7 +377,7 @@ public class ConfigFrame extends JFrame {
 			tiempo = Integer.parseInt(tarea.getTiempo()) * 1000;
 			timer = initTimer();
 			SQLiteAccess.insertTarea(tarea);
-			setTextMessage(tarea.getInstrucciones());
+			setTextMessage((tareas++) +"--" +tarea.getInstrucciones());
 			servidor.setUser(datosXml.getIdUsuario());
 			servidor.setTarea(tarea);
 			servidor.saltoTarea(tarea);

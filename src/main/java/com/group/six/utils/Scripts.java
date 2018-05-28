@@ -18,13 +18,17 @@ public class Scripts {
 	}
 
 	private String obtenerScriptBase64(String name) {
+		return MyBase64.encode(obtenerScript(name));
+	}
+
+	private String obtenerScript(String name) {
 		String cadena;
 		FileReader f;
 		StringBuilder builder = new StringBuilder();
 		try {
 			try {
-			f = new FileReader(new File("").getAbsolutePath() + "/src/main/java/com/group/six/js/" + name + ".js");
-			}catch (Exception e) {
+				f = new FileReader(new File("").getAbsolutePath() + "/src/main/java/com/group/six/js/" + name + ".js");
+			} catch (Exception e) {
 				f = new FileReader(new File("").getAbsolutePath() + "/js/" + name + ".js");
 			}
 			BufferedReader b = new BufferedReader(f);
@@ -39,6 +43,7 @@ public class Scripts {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		return MyBase64.encode(builder.toString());
+		return builder.toString();// MyBase64.encode(builder.toString());
 	}
+
 }

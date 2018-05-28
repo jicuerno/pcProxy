@@ -86,7 +86,9 @@ public class ProxyServer {
 							Linea linea = new Linea(user, tarea.getKeyTarea(), data, uri, session, time, pcIp);
 							SQLiteAccess.insertLinea(linea);
 
-							if (tarea.getUrlFinal().equals(uri) || uri.contains(tarea.getUrlFinal())) {
+							uri = uri.trim().toLowerCase();
+							String uriFinal = tarea.getUrlFinal().toLowerCase();
+							if (uriFinal.equals(uri) || uri.contains(uriFinal)) {
 								setFin(true);
 							}
 						} catch (UnsupportedEncodingException e) {
@@ -169,7 +171,7 @@ public class ProxyServer {
 				path += ".exe";
 			else if (SystemUtils.IS_OS_MAC_OSX)
 				path += "Mac";
-				
+
 			System.setProperty("webdriver.gecko.driver", path);
 			webDriver = new FirefoxDriver(options);
 
